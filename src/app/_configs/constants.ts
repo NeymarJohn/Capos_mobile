@@ -63,9 +63,9 @@ export const Constants = {
       },
       sale_note: {
         park: 'You are about to park this sale. Add a note so it can be identified by the next person who continues this sale.',
-        quote: 'You are about to quote this sale. Add a note so it can be identified by the person who completes this sale.'      
+        quote: 'You are about to quote this sale. Add a note so it can be identified by the person who completes this sale.'
       }
-    },  
+    },
     completed_status: ['layby_completed', 'completed', 'on_account_completed', 'delivery_completed', 'pickup_completed'],
     continue_status: ['layby', 'parked', 'on_account'],
     unfulfilled_status: ['delivery_unfulfilled', 'pickup_unfulfilled'],
@@ -78,7 +78,7 @@ export const Constants = {
       {id: 2, name: 'Always require a password when switching between users'}
     ],
     cash_transaction : {min: 1},
-    discount: {min: 1},  
+    discount: {min: 1},
     sale_status : [
       {value: 'new', label: 'New Sale'},
       {value: 'layby', label: 'LayBy'},
@@ -95,14 +95,14 @@ export const Constants = {
       {value: 'voided', label: 'Voided'}
     ],
     order_status : [
-      {code: 'awaiting', label:'Awaiting Payment'}, 
-      {code: 'allocated', label: 'Allocated'}, 
-      {code: 'shipped', label: 'Shipped'}, 
+      {code: 'awaiting', label:'Awaiting Payment'},
+      {code: 'allocated', label: 'Allocated'},
+      {code: 'shipped', label: 'Shipped'},
       {code: 'quote', label: 'Quote'}
     ],
     payment_status : [
-      {code: 'not_paid', label: 'Not Paid'}, 
-      {code: 'full_paid', label: 'Fully Paid'}, 
+      {code: 'not_paid', label: 'Not Paid'},
+      {code: 'full_paid', label: 'Fully Paid'},
       {code: 'partial_paid', label: 'Partially Paid'}
     ],
     plans: [
@@ -360,15 +360,19 @@ export const Constants = {
           {
             label: 'Sales Taxes',
             link: 'setup/sales-taxes',
-          },       
+          },
           {
             label: 'Station',
             link: 'setup/station'
-          }, 
+          },
+          {
+            label: 'Store Management',
+            link: 'setup/store-management'
+          },
           {
             label: 'Store Policy',
             link: 'setup/store-policy',
-          },        
+          },
           {
             label: 'Preferences',
             link: 'setup/preferences',
@@ -388,7 +392,7 @@ export const Constants = {
     }
   };
 
-  
+
 export const StoreConstants = {
   theme_color: '00c0f0',
   currencies: ['USD', 'EUR'],
@@ -401,70 +405,70 @@ export const StoreConstants = {
   ],
   default_sliders: [
     {
-      title: 'Huge sale', 
-      subtitle:'Up to 70%', 
-      button: 'Shop Now', 
+      title: 'Huge sale',
+      subtitle:'Up to 70%',
+      button: 'Shop Now',
       href:'',
       image: ''
     },
     {
-      title: 'Biggest discount', 
-      subtitle:'Check the promotion', 
-      button: 'Shop Now', 
+      title: 'Biggest discount',
+      subtitle:'Check the promotion',
+      button: 'Shop Now',
       href:'',
       image: ''
     },
     {
-      title: 'Biggest sale', 
-      subtitle:'Dont miss it', 
-      button: 'Shop Now', 
+      title: 'Biggest sale',
+      subtitle:'Dont miss it',
+      button: 'Shop Now',
       href:'',
       image: ''
     },
     {
-      title: 'Our best products', 
-      subtitle:'Special selection', 
-      button: 'Shop Now', 
+      title: 'Our best products',
+      subtitle:'Special selection',
+      button: 'Shop Now',
       href:'',
       image: ''
     },
     {
-      title: 'Massive sale', 
-      subtitle:'Only for today', 
-      button: 'Shop Now', 
+      title: 'Massive sale',
+      subtitle:'Only for today',
+      button: 'Shop Now',
       href:'',
       image: ''
     }
   ],
   default_banner_images: [
     'assets/images/product/laptop.png', 'assets/images/product/tablet.png', 'assets/images/product/cameras.png', 'assets/images/product/mobiles.png'
-  ],  
+  ],
   default_banners: [
     {
-      title: 'NEW LAPTOPS', 
-      subtitle:'Sale up to 30% off all products in the new collection.', 
-      button: 'Shop Now', 
+      title: 'NEW LAPTOPS',
+      subtitle:'Sale up to 30% off all products in the new collection.',
+      button: 'Shop Now',
       href:'',
       image: ''
     },
     {
-      title: 'TABLETS, SMARTPHONES AND MORE', 
-      subtitle:'Sale up to 30%.', 
-      button: 'Shop Now', 
+      title: 'TABLETS, SMARTPHONES AND MORE',
+      subtitle:'Sale up to 30%.',
+      button: 'Shop Now',
       href:'',
       image: ''
     },
     {
-      title: 'NEW CAMERAS COLLECTION', 
-      subtitle:'Sale up to 30%.', 
-      button: 'Shop Now', 
+      title: 'NEW CAMERAS COLLECTION',
+      subtitle:'Sale up to 30%.',
+      button: 'Shop Now',
       href:'',
       image: ''
     },
     {
-      title: 'CACH BIG OFFERS ON CAMERAS', 
-      subtitle:'Sale up to 20%.', 
-      button: '$66.00', 
+      title: 'CACH BIG OFFERS ON CAMERAS',
+      subtitle:'Sale up to 20%.',
+      button: '$66.00',
       href:'',
       image: ''
     }
@@ -527,6 +531,6 @@ export const StoreConstants = {
       displayName: 'Contact',
       iconName: 'feedback',
       route: '/contact'
-    } 
-  ],    
+    }
+  ],
 };

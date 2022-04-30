@@ -10,6 +10,7 @@ import { SalesTaxesPage } from './sales-taxes/sales-taxes.page';
 import { StorePolicyPage } from './store-policy/store-policy.page';
 import { SubscriptionPage } from './subscription/subscription.page';
 import { StationPage } from './station/station.page';
+import { StoreManagementPage } from './store-management/store-management.page';
 
 const routes: Routes = [
   {
@@ -56,7 +57,11 @@ const routes: Routes = [
   {
     path: 'station',
     component: StationPage
-  }
+  },
+  {
+    path: 'store-management',
+    component: StoreManagementPage
+  },
 ];
 
 @NgModule({

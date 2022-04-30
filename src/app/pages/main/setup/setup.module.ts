@@ -17,6 +17,7 @@ import { PaymentTypesPage } from './payment-types/payment-types.page';
 import { OutletsPage } from './outlets/outlets.page';
 import { EditOutletPage } from './outlets/edit-outlet/edit-outlet.page';
 import { StationPage } from './station/station.page';
+import { StoreManagementPage } from './store-management/store-management.page';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 @NgModule({
@@ -36,9 +37,10 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
     SalesTaxesPage,
     CustomerPointGiftPage,
     PaymentTypesPage,
-    OutletsPage,    
+    OutletsPage,
     EditOutletPage,
-    StationPage
+    StationPage,
+    StoreManagementPage
   ]
 })
 export class SetupPageModule {}
