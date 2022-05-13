@@ -9,6 +9,8 @@ import EscPosEncoder from 'esc-pos-encoder-ionic';
 import html2canvas from 'html2canvas';
 import { decode, encode } from 'base64-arraybuffer';
 
+import { UtilService } from 'src/app/_services/util.service';
+
 
 const commands = {
   LF: '\x0a',
@@ -121,16 +123,54 @@ export class SaleDetailComponent implements OnInit {
 
   printers: any[] = [];
 
+  /// receiptPrintTemplate
+  header1: String = "";
+  header1Status: Boolean = false;
+  header2: String = "";
+  header2Status: Boolean = false;
+  header3: String = "";
+  header3Status: Boolean = false;
+  header4: String = "";
+  header4Status: Boolean = false;
+  header5: String = "";
+  header5Status: Boolean = false;
+  policy1: String = "";
+  policy1Status: Boolean = false;
+  policy2: String = "";
+  policy2Status: Boolean = false;
+  policy3: String = "";
+  policy3Status: Boolean = false;
+  policy4: String = "";
+  policy4Status: Boolean = false;
+  policy5: String = "";
+  policy5Status: Boolean = false;
+  marketing1: String = "";
+  marketing1Status: Boolean = false;
+  marketing2: String = "";
+  marketing2Status: Boolean = false;
+  marketing3: String = "";
+  marketing3Status: Boolean = false;
+  marketing4: String = "";
+  marketing4Status: Boolean = false;
+  marketing5: String = "";
+  marketing5Status: Boolean = false;
+  ticketPolicy: String = "";
+  ticketPolicyStatus: Boolean = false;
+  pole1: String = "";
+  pole2: String = "";
+
   constructor(
     private popoverController: PopoverController,
     private alertService: AlertService,
     private print: PrintService,
-
+    private utilService: UtilService,
   ) {
     this.addPrinterList();
   }
 
-  ngOnInit() { }
+  ngOnInit() {
+    this.getReceiptTemplate();
+  }
 
   dismiss() {
     this.popoverController.dismiss();
@@ -219,6 +259,27 @@ export class SaleDetailComponent implements OnInit {
     const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
     let receipt = "";
     receipt += commands.HARDWARE.HW_INIT;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+    receipt += this.pole1;
+    receipt += commands.EOL;
+    receipt += this.pole2;
+    receipt += commands.EOL;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_2WIDTH;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+    receipt += this.header1;
+    receipt += commands.EOL;
+    receipt += this.header2;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+    receipt += this.header3;
+    receipt += commands.EOL;
+    receipt += this.header4;
+    receipt += commands.EOL;
+    receipt += this.header5;
+    receipt += commands.EOL;
+    receipt += commands.EOL;
     receipt += commands.TEXT_FORMAT.TXT_4SQUARE;
     receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
     receipt += this.cart.store_info.store_name;
@@ -293,15 +354,114 @@ export class SaleDetailComponent implements OnInit {
 
     })
     receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
     receipt += commands.HORIZONTAL_LINE.HR2_58MM;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
     receipt += commands.EOL;
+    receipt += commands.EOL;
+    if (this.policy1Status && this.policy1) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.policy1;
+      receipt += commands.EOL;
+    }
+    if (this.policy2Status && this.policy2) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.policy2;
+      receipt += commands.EOL;
+    }
+    if (this.policy3Status && this.policy3) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.policy3;
+      receipt += commands.EOL;
+    }
+    if (this.policy4Status && this.policy4) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.policy4;
+      receipt += commands.EOL;
+    }
+    if (this.policy5Status && this.policy5) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.policy5;
+      receipt += commands.EOL;
+    }
+    receipt += commands.EOL;
+    receipt += commands.EOL;
+    if (this.ticketPolicyStatus) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.ticketPolicy;
+      receipt += commands.EOL;
+    }
+    receipt += commands.EOL;
+    receipt += commands.EOL;
+    if (this.marketing1Status) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.marketing1;
+      receipt += commands.EOL;
+    }
+    if (this.marketing2Status) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.marketing2;
+      receipt += commands.EOL;
+    }
+    if (this.marketing3Status) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.marketing3;
+      receipt += commands.EOL;
+    }
+    if (this.marketing4Status) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.marketing4;
+      receipt += commands.EOL;
+    }
+    if (this.marketing5Status) {
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.marketing5;
+      receipt += commands.EOL;
+    }
     receipt += commands.EOL;
     receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
 
     console.log(receipt)
     this.print.sendToBluetoothPrinter(printMac, receipt);
 
+  }
+
+  getReceiptTemplate(): void {
+    this.utilService.get('sell/receipttemplate', { private_web_address: this.cart.store_info.store_name }).subscribe(result => {
+      if (result && result.body) {
+        this.header1 = result.body.header1;
+        this.header1Status = result.body.header1Status;
+        this.header2 = result.body.header2;
+        this.header2Status = result.body.header2Status;
+        this.header3 = result.body.header3;
+        this.header3Status = result.body.header3Status;
+        this.header4 = result.body.header4;
+        this.header4Status = result.body.header4Status;
+        this.header5 = result.body.header5;
+        this.header5Status = result.body.header5Status;
+        this.policy1 = result.body.policy1;
+        this.policy1Status = result.body.policy1Status;
+        this.policy2 = result.body.policy2;
+        this.policy2Status = result.body.policy2Status;
+        this.policy3 = result.body.policy3;
+        this.policy3Status = result.body.policy3Status;
+        this.policy4 = result.body.policy4;
+        this.policy4Status = result.body.policy4Status;
+        this.policy5 = result.body.policy5;
+        this.policy5Status = result.body.policy5Status;
+        this.marketing1 = result.body.marketing1;
+        this.marketing1Status = result.body.marketing1Status;
+        this.marketing2 = result.body.marketing2;
+        this.marketing2Status = result.body.marketing2Status;
+        this.marketing3 = result.body.marketing3;
+        this.marketing3Status = result.body.marketing3Status;
+        this.marketing4 = result.body.marketing4;
+        this.marketing4Status = result.body.marketing4Status;
+        this.marketing5 = result.body.marketing5;
+        this.marketing5Status = result.body.marketing5Status;
+        this.ticketPolicy = result.body.ticketPolicy;
+        this.ticketPolicyStatus = result.body.ticketPolicyStatus;
+        this.pole1 = result.body.pole1;
+        this.pole2 = result.body.pole2;
+      }
+    });
   }
 }
