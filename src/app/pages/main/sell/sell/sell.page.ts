@@ -434,35 +434,43 @@ export class SellPage implements OnInit {
           || this.selected_cart_product.product.data.has_no_price) return false;
         break;
       case 'cash':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'credit':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
+          return false;
+        break;
+      case 'visa':
+        if (this.cart.total_products == 0)
+          return false;
+        break;
+      case 'master':
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'debit':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'check':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'foodstamp':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'ebt_cash':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'gift':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'rewards':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'charge_account':
@@ -541,7 +549,7 @@ export class SellPage implements OnInit {
     }
     for (let b of buttons[mode]) {
       if (typeof b.action != 'undefined') {
-        let action = b.action
+        let action = b.action;
         let status = this.checkButtonStatus(action);
         if (!status) b.cssClass += ' disabled';
         if (mode == 'sales' || mode == 'items') {
