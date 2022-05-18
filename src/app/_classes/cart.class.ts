@@ -406,6 +406,14 @@ export class Cart{
   public get total_items(): number { //getItemCount
     return this.products.reduce((a, b) => a + b.qty, 0);
   }
+  // added by yosri
+  public get total_products(): number {
+    let count = 0;
+    for(let product of this.products) {
+			count ++;
+		}
+    return count;
+  }
 
 	public get totalWithoutDiscount():number {
 		const sum = this.products.reduce((a, b) => a + (!b.voided ? b.qty * b.price:0), 0);
