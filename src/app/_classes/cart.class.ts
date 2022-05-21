@@ -233,13 +233,14 @@ export class Cart{
 	}
 
 	save(callback?:Function) {
+    console.log('save...');
 		const data = this.saleData;
 		if(!data._id) {
 			delete data._id;
 			delete data.created_at;
 		}
     this.utilService.post('sale/sale', data).subscribe(result => {
-			const cart = result.body;
+			const cart = result.body.result;
 			let saved_cart = this._id == cart._id;
 			this._id = cart._id;
 			this.payments = cart.payments || [];
@@ -247,7 +248,8 @@ export class Cart{
 			this.getBundleProducts();
 			if(!saved_cart || this.isVoid) {
 				this.utilService.post('sell/cart', this.cartData).subscribe(cart => {
-					this.id_cart = cart.body._id;
+          console.log('sell/cart:' + this.cartData);
+					this.id_cart = cart.body.result._id;
 					this._saveCallback(callback);
 				})
 			} else {
@@ -267,6 +269,8 @@ export class Cart{
 	}
 
 	delete(callback?:Function) {
+    console.log('cart/delete...');
+    console.log(this.id_cart);
 		if(this.id_cart) {
 			this.utilService.put('sell/cart', {_id: this.id_cart, sell: null}).subscribe(result => {
         console.log("sell/cart/" + this.id_cart + ":" + result);
@@ -276,6 +280,8 @@ export class Cart{
 	}
 
 	deleteSale(callback?:Function) {
+    console.log('cart/deletesale...');
+    console.log(this._id);
 		if(this._id) {
 			this.utilService.delete('sale/sale?_id=' + this._id).subscribe(result => {
 				this.delete(callback)
@@ -622,6 +628,8 @@ export class Cart{
 				this.voided_payments.push(payment);
 			} else {
 				this.payments.push(payment);
+        console.log('cart.pay...');
+        console.log(this.payments);
 			}
 		}
 	}

@@ -152,7 +152,7 @@ export class CartService {
     this.cart.delete(() => {
       this.cart.init();
     });
-    this.loadCart(null, null);
+    // this.loadCart(null, null);
   }
 
   processCustomerCredit() {
@@ -380,6 +380,7 @@ export class CartService {
   }
 
   completeSale(callback:Function): void {
+    console.log('cart.service/completesale...');
     const payment_status = this.cart.payment_status;
     const sale_status = this.cart.sale_status;
     const aa = ['layby', 'on_account'];

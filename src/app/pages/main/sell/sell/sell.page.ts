@@ -145,6 +145,8 @@ export class SellPage implements OnInit {
   selectedProduct: CartProduct = null;
   passed_password: boolean = false;
   allow_discount: boolean = false;
+  // added by yosri
+  allow_void_sales: boolean = false;
   @ViewChild('searchbar') searchbar: AutoCompleteComponent;
 
   printers: any[] = [];
@@ -206,6 +208,7 @@ export class SellPage implements OnInit {
       this.user = user;
       if (user.role) {
         this.allow_discount = user.role.permissions.includes('apply_discounts');
+        this.allow_void_sales = user.role.permissions.includes('void_sales');
       }
     })
     this.optionAutoComplete = new AutoCompleteOptions();
@@ -486,6 +489,9 @@ export class SellPage implements OnInit {
           return false;
         break;
       case 'void_sale':
+        if (!this.allow_void_sales || this.cart.total_products == 0 || !this.selected_cart_product) return false;
+        else return true;
+        break;
       case 'return_items':
         if (['parked', 'new'].includes(this.cart.sale_status) || this.cart.voided_payments.length > 0) return false;
         break;
@@ -575,6 +581,7 @@ export class SellPage implements OnInit {
 
   doAction(action: string) {
     let status = this.checkButtonStatus(action);
+    console.log(action + " doaction:" + status);
     if (!status) return false;
     switch (action) {
       case 'view_sales':
@@ -618,6 +625,9 @@ export class SellPage implements OnInit {
         break;
       case 'return_items':
         this.returnItems();
+        break;
+      case 'void_sale':
+        this.voidSale();// added by yosri
         break;
     }
     return true;
@@ -780,6 +790,7 @@ export class SellPage implements OnInit {
   }
 
   discardSale() {
+    console.log('discard sale...');
     if (this.cart.products.length == 0 && !this.cart._id) {
       return;
     }
@@ -962,6 +973,7 @@ export class SellPage implements OnInit {
   }
 
   printSale() {
+    console.log("printsale...");
     const printMac = this.printers[0]?.id;
 
     const date = new Date(Date.now())
@@ -1220,5 +1232,25 @@ export class SellPage implements OnInit {
       .then( resp => {
         this.printers = resp;
       })
+  }
+
+  voidSale() {
+    console.log("sell/voidsale...");
+    console.log(this.cart);
+    let title = 'You are about to void this sale.';
+    let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
+    this.alertService.presentAlertConfirm(
+      title,
+      msg,
+      () => {
+        this.cart.voidSale(() => {
+          this.toastService.show(Constants.message.successVoided);
+          this.cartService.newCart();
+        })
+      },
+      null,
+      'Void Sale',
+      'Don\'t Void'
+    );
   }
 }
