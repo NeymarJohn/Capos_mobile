@@ -46,6 +46,8 @@ export const Constants = {
       noExistingProduct: 'No Existing Product',
       validPassword: 'Valid Password. You can add discount',
       notAllowedDiscount: 'You have no permission to apply discount',
+      // added by yosri
+      notAllowedVoidSale: 'You have no permission to void sale',
       invalidCartProducts: 'Please add at least one product',
       successAddedToCart: 'Successfully added to cart',
       successComplete: 'Successfully completed',
