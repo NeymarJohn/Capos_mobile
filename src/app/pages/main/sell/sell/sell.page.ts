@@ -233,6 +233,7 @@ export class SellPage implements OnInit {
   }
 
   ionViewDidEnter() {
+    console.log("ionviewdidenter...");
     this.checkInitCart();
   }
 
@@ -256,7 +257,10 @@ export class SellPage implements OnInit {
     if (this.cartService.openClose._id) {
       if (this.cartService.new_sale) {
         let action = this.cartService.action;
-        if (this.cart._id && !(this.cartService.new_sale.cart_mode == 'return' && this.cart.cart_mode == 'return' && this.cartService.new_sale.origin_sale_number == this.cart.origin_sale_number)) {
+        if (this.cart._id && !
+          (this.cartService.new_sale.cart_mode == 'return'
+            && this.cart.cart_mode == 'return'
+            && this.cartService.new_sale.origin_sale_number == this.cart.origin_sale_number)) {
           let title = 'Hold up! You currently have a sale in progress',
             msg = 'You have a sale on the Sell screen that hasn’t been completed. You can choose to return to that sale to complete it, or save that sale and continue with this one.';
           this.alertService.presentAlertConfirm(title, msg, () => {
@@ -291,16 +295,19 @@ export class SellPage implements OnInit {
   }
 
   initCart(action?: string) {
+    console.log("init cart...");
     this.cartService.initCart();
     if (action == 'return') {
       this.utilService.get('sale/sale', { sale_number: this.cart.origin_sale_number }).subscribe(result => {
+        console.log(result);
         if (result && result.body) {
           const cart = result.body[0];
           if (cart.returned) {
-            this.toastService.show('Already reaturned sale.');
+            this.toastService.show('Already returned sale.');
             this.cartService.cart.init();
           } else {
-            if (!this.cart._id) this.cartService.cart.save();
+            // if (!this.cart._id) this.cartService.cart.save();
+            // this.cartService.cart.save();
           }
         } else {
           this.toastService.show('No existing original sale.');
@@ -338,6 +345,10 @@ export class SellPage implements OnInit {
     return this.cart.getProductsFromBundle(sel_cart_product);
   }
 
+  public get selected_cart_product_length() {
+    return this.cart.getSelectedBundleProducts().length;
+  }
+
   selCartProduct(product: CartProduct) {
     product.checked = !product.checked;
     this.deSelectOther(product);
@@ -356,12 +367,20 @@ export class SellPage implements OnInit {
 
   removeProductFromCart() {
     if (!this.selected_cart_product) return;
+    let cart_products_list: CartProduct[] = [];
+    cart_products_list = this.cart.getSelectedBundleProducts();
+    console.log(cart_products_list);
     if (this.cart.store_info.preferences.confirm_delete_product) {
       this.alertService.presentConfirmDelete('Item', () => {
-        this.cartService.removeProductFromCart(this.selected_cart_product);
+        cart_products_list.forEach(element => {
+          this.cartService.removeProductFromCart(this.cart.getProductsFromBundle(element));
+        });
       })
     } else {
-      this.cartService.removeProductFromCart(this.selected_cart_product);
+      cart_products_list.forEach(element => {
+        this.cartService.removeProductFromCart(this.cart.getProductsFromBundle(element));
+        // this.cartService.removeProductFromCart(this.selected_cart_product);
+      });
     }
   }
 
@@ -493,6 +512,7 @@ export class SellPage implements OnInit {
         else return true;
         break;
       case 'return_items':
+        console.log("return_items: " + this.cart.sale_status);
         if (['parked', 'new'].includes(this.cart.sale_status) || this.cart.voided_payments.length > 0) return false;
         break;
       case 'void_item':
@@ -730,8 +750,15 @@ export class SellPage implements OnInit {
             this.cartService.cart.discount = data.discount;
             this.cartService.cart.setGlobalDiscount();
           } else {
-            let product: CartProduct = this.cart.products.find(item => item == this.selected_cart_product);
-            product.discount = data.discount;
+            let cart_products_list: CartProduct [] = [];
+            cart_products_list = this.cart.getSelectedBundleProducts();
+            console.log(cart_products_list);
+            cart_products_list.forEach(element => {
+              // let product: CartProduct = this.cart.products.find(item => item == element);
+              // product.discount = data.discount;
+              this.cart.getProductsFromBundle(element).discount = data.discount;
+              this.cartService.cart.save();
+            });
           }
           this.cartService.cart.save();
         }
@@ -763,8 +790,17 @@ export class SellPage implements OnInit {
 
   exchangeMinus() {
     if (!this.selected_cart_product) return;
-    this.selected_cart_product.sign *= -1;
-    this.cartService.cart.save();
+    if (this.selected_cart_product_length > 0) {
+      let cart_products_list: CartProduct [] = [];
+      cart_products_list = this.cart.getSelectedBundleProducts();
+      cart_products_list.forEach(element => {
+        this.cart.getProductsFromBundle(element).sign *= -1;
+        this.cartService.cart.save();
+      });
+    } else {
+      this.selected_cart_product.sign *= -1;
+      this.cartService.cart.save();
+    }
   }
 
   async updateQuantity() {
@@ -781,8 +817,19 @@ export class SellPage implements OnInit {
       if (typeof result.data != 'undefined') {
         let data = result.data;
         if (data.process) {
-          this.selected_cart_product.qty = data.qty;
-          this.cartService.cart.save();
+          if (this.selected_cart_product_length > 1) {
+            console.log(this.selected_cart_product);
+            let cart_products_list: CartProduct [] = [];
+            cart_products_list = this.cart.getSelectedBundleProducts();
+            cart_products_list.forEach(element => {
+              this.cart.getProductsFromBundle(element).qty = data.qty;
+              this.cartService.cart.save();
+            });
+
+          } else {
+            this.selected_cart_product.qty = data.qty;
+            this.cartService.cart.save();
+          }
         }
       }
     });
@@ -1037,47 +1084,49 @@ export class SellPage implements OnInit {
       receipt += `${p.qty}     `;
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
       receipt += p.discountedTotalWithoutGlobal_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += "Subtotal     ";
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += this.cartService.cart.subTotal_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += `Discount${this.cartService.cart.discount_rate}     `;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += this.cartService.cart.discount_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += `Total Tax${this.cartService.cart.taxRate_str}     `;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += this.cartService.cart.taxAmount_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += "Sale Total     ";
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += this.cartService.cart.totalIncl_str;
-      // receipt += commands.EOL;
-      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      // receipt += "Voided     ";
-      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      // receipt += this.cartService.cart.voidedAmount_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += "Change     ";
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += UtilFunc.getPriceWithCurrency(this.cartService.cart.change);
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += "Balance     ";
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += UtilFunc.getPriceWithCurrency(this.cartService.cart.total_to_pay);
 
     })
     receipt += commands.EOL;
     receipt += commands.HORIZONTAL_LINE.HR2_58MM;
     receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += "Subtotal     ";
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += this.cartService.cart.subTotal_str;
     receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += `Discount${this.cartService.cart.discount_rate}     `;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += this.cartService.cart.discount_str;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += `Total Tax${this.cartService.cart.taxRate_str}     `;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += this.cartService.cart.taxAmount_str;
+    receipt += commands.EOL;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += "Sale Total     ";
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += this.cartService.cart.totalIncl_str;
+    // receipt += commands.EOL;
+    // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    // receipt += "Voided     ";
+    // receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    // receipt += this.cartService.cart.voidedAmount_str;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += "Change     ";
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += UtilFunc.getPriceWithCurrency(this.cartService.cart.change);
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += "Balance     ";
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += UtilFunc.getPriceWithCurrency(this.cartService.cart.total_to_pay);
+    receipt += commands.EOL;
+    receipt += commands.EOL;
+
     if (this.policy1Status && this.policy1) {
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
       receipt += this.policy1;
@@ -1175,8 +1224,10 @@ export class SellPage implements OnInit {
   }
 
   returnItems() {
+    console.log('return items...');
     this.cartService.loadCart(this.cart._id, 'return', () => {
       this.checkInitCart();
+      this.printSale();
     })
   }
 

@@ -10,6 +10,8 @@ import html2canvas from 'html2canvas';
 import { decode, encode } from 'base64-arraybuffer';
 
 import { UtilService } from 'src/app/_services/util.service';
+import { ConfirmPasswordComponent } from 'src/app/components/confirm-password/confirm-password.component';
+import { AuthService } from 'src/app/_services/auth.service';
 
 
 const commands = {
@@ -115,11 +117,14 @@ const commands = {
   styleUrls: ['./sale-detail.component.scss'],
 })
 export class SaleDetailComponent implements OnInit {
+  user: any;
   cart: Cart;
   util = UtilFunc;
   completed_status = Constants.completed_status;
   continue_status = Constants.continue_status;
   unfulfilled_status = Constants.unfulfilled_status;
+
+  passed_password: boolean = false;
 
   printers: any[] = [];
 
@@ -164,8 +169,12 @@ export class SaleDetailComponent implements OnInit {
     private alertService: AlertService,
     private print: PrintService,
     private utilService: UtilService,
+    private authService: AuthService,
   ) {
     this.addPrinterList();
+    this.authService.currentUser.subscribe(user => {
+      this.user = user;
+    })
   }
 
   ngOnInit() {
@@ -208,7 +217,14 @@ export class SaleDetailComponent implements OnInit {
     if (this.unfulfilled_status.includes(sale.sale_status)) {
       action = 'mark';
     }
-    this.popoverController.dismiss({ action: action, sale: sale });
+
+    if (!this.passed_password && action == "return") {
+      this.confirmPassword(() => {
+        this.popoverController.dismiss({ action: 'return', sale: sale });
+      });
+    } else {
+      this.popoverController.dismiss({ action: action, sale: sale });
+    }
   }
 
   viewOriginalSale(sale_number: string) {
@@ -220,15 +236,35 @@ export class SaleDetailComponent implements OnInit {
   voidSale(sale: Cart) {
     console.log("sale-detail/voidsale...");
     console.log(sale);
-    let title = 'You are about to void this sale.';
-    let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
-    this.alertService.presentAlertConfirm(title, msg, () => {
-      this.popoverController.dismiss({ action: 'void_sale', sale: sale });
-    }, null, 'Void Sale', 'Don\'t Void');
+
+    if (!this.passed_password) {
+      this.confirmPassword(() => {
+        let title = 'You are about to void this sale.';
+        let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
+        this.alertService.presentAlertConfirm(title, msg, () => {
+          this.popoverController.dismiss({ action: 'void_sale', sale: sale });
+        }, null, 'Void Sale', 'Don\'t Void');
+
+      });
+    } else {
+      let title = 'You are about to void this sale.';
+      let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
+      this.alertService.presentAlertConfirm(title, msg, () => {
+        this.popoverController.dismiss({ action: 'void_sale', sale: sale });
+      }, null, 'Void Sale', 'Don\'t Void');
+    }
+
+
   }
 
   voidItems(sale: Cart) {
-    this.popoverController.dismiss({ action: 'void', sale: sale });
+    if (!this.passed_password) {
+      this.confirmPassword(() => {
+        this.popoverController.dismiss({ action: 'void', sale: sale });
+      });
+    } else {
+      this.popoverController.dismiss({ action: 'void', sale: sale });
+    }
   }
 
   checkNumberMultiple(x, y): number {
@@ -319,45 +355,46 @@ export class SaleDetailComponent implements OnInit {
       receipt += `${p.qty}     `;
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
       receipt += p.discountedTotalWithoutGlobal_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += "Subtotal     ";
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += this.cart.subTotal_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += `Discount${this.cart.discount_rate}     `;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += this.cart.discount_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += `Total Tax${this.cart.taxRate_str}     `;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += this.cart.taxAmount_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += "Sale Total     ";
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += this.cart.totalIncl_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += "Voided     ";
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += this.cart.voidedAmount_str;
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += "Change     ";
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += UtilFunc.getPriceWithCurrency(this.cart.change);
-      receipt += commands.EOL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += "Balance     ";
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += UtilFunc.getPriceWithCurrency(this.cart.total_to_pay);
 
-    })
+    });
     receipt += commands.EOL;
     receipt += commands.HORIZONTAL_LINE.HR2_58MM;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += "Subtotal     ";
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += this.cart.subTotal_str;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += `Discount${this.cart.discount_rate}     `;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += this.cart.discount_str;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += `Total Tax${this.cart.taxRate_str}     `;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += this.cart.taxAmount_str;
+    receipt += commands.EOL;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += "Sale Total     ";
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += this.cart.totalIncl_str;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += "Voided     ";
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += this.cart.voidedAmount_str;
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += "Change     ";
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += UtilFunc.getPriceWithCurrency(this.cart.change);
+    receipt += commands.EOL;
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    receipt += "Balance     ";
+    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+    receipt += UtilFunc.getPriceWithCurrency(this.cart.total_to_pay);
     receipt += commands.EOL;
     receipt += commands.EOL;
     if (this.policy1Status && this.policy1) {
@@ -466,5 +503,26 @@ export class SaleDetailComponent implements OnInit {
         this.pole2 = result.body.pole2;
       }
     });
+  }
+
+  async confirmPassword(callback?: Function) {
+    const popover = await this.popoverController.create({
+      component: ConfirmPasswordComponent,
+      // event: ev,
+      cssClass: 'popover_custom fixed-width',
+      translucent: true,
+      componentProps: { private_web_address: this.user.private_web_address, email: this.user.email }
+    });
+
+    popover.onDidDismiss().then(result => {
+      if (typeof result.data != 'undefined') {
+        let data = result.data;
+        if (data.process) {
+          this.passed_password = true;
+          if (callback) callback();
+        }
+      }
+    });
+    await popover.present();
   }
 }
