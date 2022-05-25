@@ -128,8 +128,10 @@ export class CartService {
       this.new_sale.origin_status = this.new_sale.sale_status;
       this.new_sale.origin_sale_number = this.new_sale.sale_number;
       this.new_sale._id = '';
-      this.new_sale.sale_number = UtilFunc.genRandomOrderString(8);
+      // this.new_sale.sale_number = UtilFunc.genRandomOrderString(8);
     }
+    console.log("new sale...");
+    console.log(this.new_sale);
     this.cart.loadByCart(this.new_sale);
     if(this.new_sale.cart_mode == 'return') {
       if(this.action == 'return') {

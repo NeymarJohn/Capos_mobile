@@ -235,11 +235,15 @@ export class Cart{
 	save(callback?:Function) {
     console.log('save...');
 		const data = this.saleData;
+    console.log("sale data...");
+    console.log(this.saleData);
 		if(!data._id) {
 			delete data._id;
 			delete data.created_at;
 		}
     this.utilService.post('sale/sale', data).subscribe(result => {
+      console.log("sale/sale result...");
+      console.log(result);
 			const cart = result.body.result;
 			let saved_cart = this._id == cart._id;
 			this._id = cart._id;
@@ -259,8 +263,13 @@ export class Cart{
 	}
 
 	_saveCallback(callback?:Function) {
-		if(this.sale_status == 'return_completed') {
+    console.log("_savecallback...");
+    console.log(this.sale_status);
+		// if(this.sale_status == 'return_completed') {
+		if(this.sale_status == 'return_completed' || this.sale_status == 'new' || this.cart_mode == 'return') {
 			this.utilService.post('sale/set_returned_sale', {sale_number: this.origin_sale_number}).subscribe(result => {
+        console.log("sale/set_returned_sale: " + this.origin_sale_number);
+        console.log(result);
 				if(callback) callback(result);
 			})
 		} else {
@@ -297,6 +306,8 @@ export class Cart{
 			sale: this._id
 		}
 		if(!this.id_cart) delete data._id;
+    console.log("cartdata...");
+    console.log(data);
 		return data;
 	}
 
@@ -731,7 +742,7 @@ export class Cart{
 
 	setRefund() {
 		this.sale_status = 'new';
-		this.payments = [];
+		// this.payments = [];
 		this.discount.value *= -1;
 		for(let product of this.products) {
 			product.qty *= -1;
@@ -812,10 +823,20 @@ export class Cart{
 	}
 
 	public getSelectedBundleProduct():CartProduct {
-		let result:CartProduct = null;
+    let result: CartProduct = null;
 		for(let b of this.bundle_products) {
 			result = b.cart_products.find(item => item.checked);
 			if(result) break;
+		}
+		return result;
+	}
+
+  public getSelectedBundleProducts():CartProduct [] {
+		let result: CartProduct[] = [];
+    let temp: CartProduct = null;
+		for(let b of this.bundle_products) {
+			temp = b.cart_products.find(item => item.checked);
+			if(temp) result.push(temp);
 		}
 		return result;
 	}
