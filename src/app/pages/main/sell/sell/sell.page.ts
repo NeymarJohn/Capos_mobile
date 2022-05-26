@@ -526,6 +526,9 @@ export class SellPage implements OnInit {
       case 'void_item':
         if (['parked', 'new'].includes(this.cart.sale_status) || !this.selected_cart_product) return false;
         break;
+      case 'open_drawer_quick':
+        return true;
+        break;
       default:
         return false;
     }
@@ -534,7 +537,7 @@ export class SellPage implements OnInit {
 
   async openActionSheet(mode: string) {
     const headers = {
-      sales: 'Sale Actions', items: 'Item Actions', payment: 'Payment Actions', print: 'Print Actions'
+      sales: 'Sale Actions', items: 'Item Actions', payment: 'Payment Actions', print: 'Print Actions', drawer:'Open Drawer'
     };
     const buttons = {
       sales: [
@@ -562,6 +565,10 @@ export class SellPage implements OnInit {
       print: [
         { text: 'Print', cssClass: 'secondary', action: 'print_current' },
         { text: 'Print last transaction', cssClass: 'secondary', action: 'print_last_tran' },
+        { text: 'Cancel', icon: 'close', role: 'cancel' }
+      ],
+      drawer: [
+        { text: 'Open Drawer Quick', cssClass: 'secondary', action: 'open_drawer_quick' },
         { text: 'Cancel', icon: 'close', role: 'cancel' }
       ]
     }
@@ -591,7 +598,7 @@ export class SellPage implements OnInit {
         let action = b.action;
         let status = this.checkButtonStatus(action);
         if (!status) b.cssClass += ' disabled';
-        if (mode == 'sales' || mode == 'items' || mode == 'print') {
+        if (mode == 'sales' || mode == 'items' || mode == 'print' || mode == 'drawer') {
           b.handler = () => {
             this.doAction(action);
           }
@@ -664,8 +671,13 @@ export class SellPage implements OnInit {
         break;
       case 'print_current':
         this.printSale();
+        break;
       case 'print_last_tran':
         this.printLastSale();
+        break;
+      case 'open_drawer_quick':
+        this.openDrawerQuick();
+        break;
     }
     return true;
   }
@@ -1389,6 +1401,7 @@ export class SellPage implements OnInit {
     this.cartService.completeSale(async () => {
       this.toastService.show(Constants.message.successComplete);
       this.printSale();
+      this.loadLastSale();
       if (this.cart.payment_status == 'cash') {
         const popover = await this.popoverController.create({
           component: PayChangeComponent,
@@ -1498,7 +1511,7 @@ export class SellPage implements OnInit {
     );
   }
 
-  loadLastSale() {
+  loadLastSale(callback?: Function) {
     console.log("loadlastsale...");
     const filter = {range: 'last_sale', user_id: this.user._id};
     this.utilService.get('sale/sale', filter).subscribe(result => {
@@ -1506,9 +1519,20 @@ export class SellPage implements OnInit {
         console.log(result.body.data[0]);
         this.last_sale = new Cart(this.authService, this.utilService);
         this.last_sale.loadByCart(result.body.data[0]);
+        // if(callback) callback();
       } else {
         this.last_sale = null;
       }
     })
+  }
+
+  openDrawerQuick() {
+    const printMac = this.printers[0]?.id;
+    let data = "";
+    let code1 = "27 112 0 150 250"; //decimal
+    let code2 = "\x1B \x70 \x00 \x96 \xFA"; //hexadecimal
+    let code = "ESCp0û."; //ascii
+    console.log(code2);
+    this.print.sendToBluetoothPrinter(printMac, code2);
   }
 }
