@@ -63,6 +63,7 @@ export class CartService {
   }
 
   getLastClose() {
+    console.log("getlastclose...");
     this.lastClose = null;
     const query = {
       private_web_address: this.user.private_web_address,
@@ -72,6 +73,7 @@ export class CartService {
     };
     if(!this.user.outlet) delete query.outlet;
     this.utilService.get('sell/openclose', query).subscribe(async result => {
+      console.log(result);
       if(result && result.body.length>0) {
         let c = result.body[0];
         this.lastClose = new Openclose(this.authService, this.utilService);
