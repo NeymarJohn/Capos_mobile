@@ -10,9 +10,6 @@ import html2canvas from 'html2canvas';
 import { decode, encode } from 'base64-arraybuffer';
 
 import { UtilService } from 'src/app/_services/util.service';
-import { ConfirmPasswordComponent } from 'src/app/components/confirm-password/confirm-password.component';
-import { AuthService } from 'src/app/_services/auth.service';
-
 
 const commands = {
   LF: '\x0a',
@@ -117,14 +114,11 @@ const commands = {
   styleUrls: ['./sale-detail.component.scss'],
 })
 export class SaleDetailComponent implements OnInit {
-  user: any;
   cart: Cart;
   util = UtilFunc;
   completed_status = Constants.completed_status;
   continue_status = Constants.continue_status;
   unfulfilled_status = Constants.unfulfilled_status;
-
-  passed_password: boolean = false;
 
   printers: any[] = [];
 
@@ -166,15 +160,12 @@ export class SaleDetailComponent implements OnInit {
 
   constructor(
     private popoverController: PopoverController,
+    private popoverController1: PopoverController,
     private alertService: AlertService,
     private print: PrintService,
     private utilService: UtilService,
-    private authService: AuthService,
   ) {
     this.addPrinterList();
-    this.authService.currentUser.subscribe(user => {
-      this.user = user;
-    })
   }
 
   ngOnInit() {
@@ -208,23 +199,17 @@ export class SaleDetailComponent implements OnInit {
     return '';
   }
 
-  handleAction(sale: Cart) {
+  async handleAction(sale: Cart) {
     console.log("sale-detail/handleAction...");
     let action = 'new';
     if (this.completed_status.includes(sale.sale_status)) {
-      action = 'return';
+        action = 'return';
     }
     if (this.unfulfilled_status.includes(sale.sale_status)) {
       action = 'mark';
     }
-
-    if (!this.passed_password && action == "return") {
-      this.confirmPassword(() => {
-        this.popoverController.dismiss({ action: 'return', sale: sale });
-      });
-    } else {
       this.popoverController.dismiss({ action: action, sale: sale });
-    }
+
   }
 
   viewOriginalSale(sale_number: string) {
@@ -236,35 +221,15 @@ export class SaleDetailComponent implements OnInit {
   voidSale(sale: Cart) {
     console.log("sale-detail/voidsale...");
     console.log(sale);
-
-    if (!this.passed_password) {
-      this.confirmPassword(() => {
-        let title = 'You are about to void this sale.';
-        let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
-        this.alertService.presentAlertConfirm(title, msg, () => {
-          this.popoverController.dismiss({ action: 'void_sale', sale: sale });
-        }, null, 'Void Sale', 'Don\'t Void');
-
-      });
-    } else {
-      let title = 'You are about to void this sale.';
-      let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
-      this.alertService.presentAlertConfirm(title, msg, () => {
-        this.popoverController.dismiss({ action: 'void_sale', sale: sale });
-      }, null, 'Void Sale', 'Don\'t Void');
-    }
-
-
+    let title = 'You are about to void this sale.';
+    let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
+    this.alertService.presentAlertConfirm(title, msg, () => {
+      this.popoverController.dismiss({ action: 'void_sale', sale: sale });
+    }, null, 'Void Sale', 'Don\'t Void');
   }
 
   voidItems(sale: Cart) {
-    if (!this.passed_password) {
-      this.confirmPassword(() => {
-        this.popoverController.dismiss({ action: 'void', sale: sale });
-      });
-    } else {
-      this.popoverController.dismiss({ action: 'void', sale: sale });
-    }
+    this.popoverController.dismiss({ action: 'void', sale: sale });
   }
 
   checkNumberMultiple(x, y): number {
@@ -505,24 +470,4 @@ export class SaleDetailComponent implements OnInit {
     });
   }
 
-  async confirmPassword(callback?: Function) {
-    const popover = await this.popoverController.create({
-      component: ConfirmPasswordComponent,
-      // event: ev,
-      cssClass: 'popover_custom fixed-width',
-      translucent: true,
-      componentProps: { private_web_address: this.user.private_web_address, email: this.user.email }
-    });
-
-    popover.onDidDismiss().then(result => {
-      if (typeof result.data != 'undefined') {
-        let data = result.data;
-        if (data.process) {
-          this.passed_password = true;
-          if (callback) callback();
-        }
-      }
-    });
-    await popover.present();
-  }
 }

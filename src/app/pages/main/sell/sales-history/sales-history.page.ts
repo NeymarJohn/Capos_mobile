@@ -12,6 +12,8 @@ import { SaleDetailComponent } from 'src/app/components/sale-detail/sale-detail.
 import { ToastService } from 'src/app/_services/toast.service';
 import { CartService } from 'src/app/_services/cart.service';
 
+import { ConfirmPasswordComponent } from 'src/app/components/confirm-password/confirm-password.component';
+
 @Component({
   selector: 'app-sales-history',
   templateUrl: './sales-history.page.html',
@@ -25,6 +27,9 @@ export class SalesHistoryPage implements OnInit {
   statuses = {all: [], process: [], continue: []};
   default_sale_status = {all: '', process: 'all_closed', continue: 'all_open'};
   default_voided = {all: 'all', process: '', continue: ''};
+
+  user: any;
+  passed_password: boolean = false;
 
   filter = {
     customer: '',
@@ -63,12 +68,16 @@ export class SalesHistoryPage implements OnInit {
     private utilService: UtilService,
     private toastService: ToastService,
     private popoverController: PopoverController,
+    private popoverController1: PopoverController,
     private cartService: CartService,
     private nav: NavController
   ) {
     this.dataSource = new SaleDataSource(this.authService, this.utilService);
     this.page = {totalElements: 0, pageNumber: 0};
     this.authService.checkPremission('sales_history');
+    this.authService.currentUser.subscribe(user => {
+      this.user = user;
+    });
   }
 
   ngOnInit() {
@@ -160,7 +169,17 @@ export class SalesHistoryPage implements OnInit {
     await popover.present();
   }
 
-  async openDetail(row) {
+  openDetail(row) {
+    if(!this.passed_password) {
+      this.confirmPassword(()=>{
+        this._openDetail(row);
+      });
+    } else {
+      this._openDetail(row);
+    }
+  }
+
+  async _openDetail(row) {
     let cart:Cart = row.cart;
     const popover = await this.popoverController.create({
       component: SaleDetailComponent,
@@ -207,5 +226,26 @@ export class SalesHistoryPage implements OnInit {
   onPage(offset) {
     this.page.pageNumber = offset;
     this.search();
+  }
+
+  async confirmPassword(callback?: Function) {
+    const popover = await this.popoverController1.create({
+      component: ConfirmPasswordComponent,
+      // event: ev,
+      cssClass: 'popover_custom fixed-width',
+      translucent: true,
+      componentProps: { private_web_address: this.user.private_web_address, email: this.user.email }
+    });
+
+    popover.onDidDismiss().then(result => {
+      if (typeof result.data != 'undefined') {
+        let data = result.data;
+        if (data.process) {
+          this.passed_password = true;
+          if (callback) callback();
+        }
+      }
+    });
+    await popover.present();
   }
 }
