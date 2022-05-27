@@ -45,8 +45,8 @@ const commands = {
     HW_RESET: '\x1b\x3f\x0a\x00', // Reset printer hardware
   },
   CASH_DRAWER: {
-    CD_KICK_2: '\x1b\x70\x00', // Sends a pulse to pin 2 []
-    CD_KICK_5: '\x1b\x70\x01', // Sends a pulse to pin 5 []
+    CD_KICK_2: '\x1b\x70\x00\x32\xFA', // Sends a pulse to pin 2 []
+    CD_KICK_5: '\x1b\x70\x01\x32\xFA', // Sends a pulse to pin 5 []
   },
   MARGINS: {
     BOTTOM: '\x1b\x4f', // Fix bottom size
@@ -262,6 +262,8 @@ export class SaleDetailComponent implements OnInit {
     const date = new Date(Date.now())
     const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
     let receipt = "";
+    receipt += commands.CASH_DRAWER.CD_KICK_2;
+
     receipt += commands.HARDWARE.HW_INIT;
     receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
     receipt += this.pole1;

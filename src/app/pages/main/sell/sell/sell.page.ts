@@ -9,6 +9,7 @@ import { PayAmountComponent } from 'src/app/components/pay-amount/pay-amount.com
 import { PayChangeComponent } from 'src/app/components/pay-change/pay-change.component';
 import { QuantityComponent } from 'src/app/components/quantity/quantity.component';
 import { SaleNoteComponent } from 'src/app/components/sale-note/sale-note.component';
+import { DrawerNoteComponent } from 'src/app/components/drawer-note/drawer-note.component';
 import { UnfulfilledSaleComponent } from 'src/app/components/unfulfilled-sale/unfulfilled-sale.component';
 import { Cart } from 'src/app/_classes/cart.class';
 import { CartProduct } from 'src/app/_classes/cart_product.class';
@@ -62,8 +63,8 @@ const commands = {
     HW_RESET: '\x1b\x3f\x0a\x00', // Reset printer hardware
   },
   CASH_DRAWER: {
-    CD_KICK_2: '\x1b\x70\x00', // Sends a pulse to pin 2 []
-    CD_KICK_5: '\x1b\x70\x01', // Sends a pulse to pin 5 []
+    CD_KICK_2: '\x1b\x70\x00\x32\xFA', // Sends a pulse to pin 2 []
+    CD_KICK_5: '\x1b\x70\x01\x32\xFA', // Sends a pulse to pin 5 []
   },
   MARGINS: {
     BOTTOM: '\x1b\x4f', // Fix bottom size
@@ -529,6 +530,9 @@ export class SellPage implements OnInit {
       case 'open_drawer_quick':
         return true;
         break;
+      case 'open_drawer':
+        return true;
+        break;
       default:
         return false;
     }
@@ -568,6 +572,7 @@ export class SellPage implements OnInit {
         { text: 'Cancel', icon: 'close', role: 'cancel' }
       ],
       drawer: [
+        { text: 'Open Drawer', cssClass: 'secondary', action: 'open_drawer' },
         { text: 'Open Drawer Quick', cssClass: 'secondary', action: 'open_drawer_quick' },
         { text: 'Cancel', icon: 'close', role: 'cancel' }
       ]
@@ -677,6 +682,9 @@ export class SellPage implements OnInit {
         break;
       case 'open_drawer_quick':
         this.openDrawerQuick();
+        break;
+      case 'open_drawer':
+        this.openDrawer();
         break;
     }
     return true;
@@ -1054,6 +1062,8 @@ export class SellPage implements OnInit {
     const date = new Date(Date.now())
     const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
     let receipt = "";
+    receipt += commands.CASH_DRAWER.CD_KICK_2;
+
     receipt += commands.HARDWARE.HW_INIT;
     receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
     receipt += this.pole1;
@@ -1229,6 +1239,8 @@ export class SellPage implements OnInit {
     const date = new Date(Date.now())
     const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
     let receipt = "";
+    receipt += commands.CASH_DRAWER.CD_KICK_2;
+
     receipt += commands.HARDWARE.HW_INIT;
     receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
     receipt += this.pole1;
@@ -1530,9 +1542,47 @@ export class SellPage implements OnInit {
     const printMac = this.printers[0]?.id;
     let data = "";
     let code1 = "27 112 0 150 250"; //decimal
-    let code2 = "\x1B \x70 \x00 \x96 \xFA"; //hexadecimal
+    let code2 = commands.CASH_DRAWER.CD_KICK_2;
     let code = "ESCp0û."; //ascii
     console.log(code2);
     this.print.sendToBluetoothPrinter(printMac, code2);
+  }
+
+  async openDrawerNote(msg?: string, item?: string, callback?: Function) {
+    const data = { note: "", msg: "", item: "" };
+    const popover = await this.popoverController.create({
+      component: DrawerNoteComponent,
+      // event: ev,
+      cssClass: 'popover_custom fixed-width',
+      translucent: true,
+      componentProps: { data: data }
+    });
+
+    popover.onDidDismiss().then(result => {
+      if (typeof result.data != 'undefined') {
+        let data = result.data;
+        if (data.process && data.reason && data.amount) {
+
+          data.user_id = this.user._id;
+          data.private_web_address = this.user.private_web_address;
+
+          this.utilService.post('cash/history', data).subscribe(result => {
+            console.log(result);
+            this.openDrawerQuick();
+          })
+        }
+      }
+    });
+    await popover.present();
+  }
+
+  openDrawer() {
+    if (!this.passed_password) {
+      this.confirmPassword(() => {
+        this.openDrawerNote();
+      });
+    } else {
+      this.openDrawerNote();
+    }
   }
 }
