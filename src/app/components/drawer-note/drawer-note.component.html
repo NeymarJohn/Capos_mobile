@@ -1,0 +1,25 @@
+<div class="box">
+  <h4>Add Some Information</h4>
+  <ion-button fill="clear" class="close-button" (click)="dismiss()"><ion-icon name="close-circle-outline" color="primary"></ion-icon></ion-button>
+  <div class="pr-3 pl-3" class="msg">Need to add the amount you want to withdraw and the reason in order to open cash drawer</div>
+  <form [formGroup]="form" (ngSubmit)="doAction()">
+    <ion-item class="w-100">
+      <ion-label position="floating">Add a reason</ion-label>
+      <ion-textarea formControlName="note" rows="1"></ion-textarea>
+    </ion-item>
+    <span class="error" *ngIf="isSubmitted && noteInput.invalid">{{noteInputError}}</span>
+    <ion-item class="w-100">
+      <ion-label position="floating">Add a amount</ion-label>
+      <ion-input formControlName="amount" rows="1"></ion-input>
+    </ion-item>
+    <span class="error" *ngIf="isSubmitted && amountInput.invalid">{{amountInputError}}</span>
+    <ion-row class="justify-content-center">
+      <ion-col>
+        <ion-button type="button" color="danger" expand="block" (click)="dismiss()">Cancel</ion-button>
+      </ion-col>
+      <ion-col>
+        <ion-button type="submit" expand="block">Open Drawer</ion-button>
+      </ion-col>
+    </ion-row>
+  </form>
+</div>
