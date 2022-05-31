@@ -56,6 +56,7 @@ export class StoreManagementPage implements OnInit {
   pole1: String = "";
   pole2: String = "";
   private_web_address: String = "";
+  fast_discount: number = 0;
 
   constructor(
     private toastService: ToastService,
@@ -78,6 +79,7 @@ export class StoreManagementPage implements OnInit {
     const decoded = this.jwtHelper.decodeToken(tkn);
     this.private_web_address = decoded.private_web_address;
     this.getReceiptTemplate();
+    this.getFastDiscount();
   }
 
   getReceiptTemplate(): void {
@@ -121,6 +123,17 @@ export class StoreManagementPage implements OnInit {
     });
   }
 
+
+  getFastDiscount() {
+    this.utilService.get('discount/fast_discount').subscribe(result => {
+      console.log(result);
+      const data= result.body.data;
+      if(data) {
+        this.fast_discount = data.discount_percent;
+      }
+    });
+  }
+
   onSave(): void {
     const data = {
       private_web_address: 'newonestore',
@@ -158,7 +171,7 @@ export class StoreManagementPage implements OnInit {
       ticketPolicyStatus: this.ticketPolicyStatus,
       pole1: this.pole1,
       pole2: this.pole2
-    }
+    };
     this.utilService.post('sell/receipttemplate', data).subscribe((res) => {
       if (res) {
         this.toastService.show('Receipt print template save successfully');
@@ -181,7 +194,20 @@ export class StoreManagementPage implements OnInit {
     this.payment.save(() => {
       // TODO:
       this.toastService.show(Constants.message.successSaved);
-    })
+    });
+  }
+
+  onSaveDiscount() {
+    const data = {
+      fast_discount: this.fast_discount,
+      // fast_discountStatus: this.fast_discountStatus,
+
+    }
+    this.utilService.post('discount/fast_discount', data).subscribe((res) => {
+      if (res) {
+        this.toastService.show('Discount rate save successfully');
+      }
+    });
   }
 
 }

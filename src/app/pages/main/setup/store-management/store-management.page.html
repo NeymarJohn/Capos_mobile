@@ -9,6 +9,9 @@
         <ion-segment-button value="receipter">
           <ion-label>Receipter</ion-label>
         </ion-segment-button>
+        <ion-segment-button value="discount">
+          <ion-label>Discount</ion-label>
+        </ion-segment-button>
       </ion-segment>
     </ion-toolbar>
 
@@ -321,6 +324,25 @@
         <ion-row class="justify-content-center mt-4">
           <ion-col size-lg="3" size-md="6" size="12">
             <ion-button (click)="onSave()" expand="block"><ion-icon name="save-outline" class="mr-2"></ion-icon>Update</ion-button>
+          </ion-col>
+        </ion-row>
+      </div>
+      <div *ngIf="cur_tab=='discount'">
+        <div>
+          <ion-row class="mt-3 w-100">
+            <ion-col size="12">
+              <ion-label class="pl-3">Fast Discount Rate(%): </ion-label>
+            </ion-col>
+            <ion-col size="12">
+              <ion-item>
+                <ion-input type="number" [(ngModel)]="fast_discount" [ngModelOptions]="{standalone: true}" placeholder="0" min="0" max="100" required></ion-input>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+        </div>
+        <ion-row class="justify-content-center mt-4">
+          <ion-col size-lg="3" size-md="6" size="12">
+            <ion-button (click)="onSaveDiscount()" expand="block"><ion-icon name="save-outline" class="mr-2"></ion-icon>Update</ion-button>
           </ion-col>
         </ion-row>
       </div>
