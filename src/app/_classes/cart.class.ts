@@ -66,6 +66,8 @@ export class Cart{
 	bundle_products:IBundleProduct[] = [];
 	register_obj:any = null;
 
+  is_ignoreTax = false;
+
 	constructor(
 		private authService: AuthService,
 		private utilService: UtilService)	{
@@ -121,6 +123,7 @@ export class Cart{
 		this.cart_mode = 'new';
 		this.bundle_products = [];
 		this.register_obj = null;
+    this.is_ignoreTax = false;
 	}
 
 	loadCurrent(success?:Function, noexist?:Function) {
@@ -236,14 +239,12 @@ export class Cart{
     console.log('save...');
 		const data = this.saleData;
     console.log("sale data...");
-    console.log(this.saleData);
 		if(!data._id) {
 			delete data._id;
 			delete data.created_at;
 		}
     this.utilService.post('sale/sale', data).subscribe(result => {
       console.log("sale/sale result...");
-      console.log(result);
 			const cart = result.body.result;
 			let saved_cart = this._id == cart._id;
 			this._id = cart._id;
@@ -264,12 +265,10 @@ export class Cart{
 
 	_saveCallback(callback?:Function) {
     console.log("_savecallback...");
-    console.log(this.sale_status);
 		// if(this.sale_status == 'return_completed') {
 		if(this.sale_status == 'return_completed' || this.sale_status == 'new' || this.cart_mode == 'return') {
 			this.utilService.post('sale/set_returned_sale', {sale_number: this.origin_sale_number}).subscribe(result => {
         console.log("sale/set_returned_sale: " + this.origin_sale_number);
-        console.log(result);
 				if(callback) callback(result);
 			})
 		} else {
@@ -279,7 +278,6 @@ export class Cart{
 
 	delete(callback?:Function) {
     console.log('cart/delete...');
-    console.log(this.id_cart);
 		if(this.id_cart) {
 			this.utilService.put('sell/cart', {_id: this.id_cart, sell: null}).subscribe(result => {
         console.log("sell/cart/" + this.id_cart + ":" + result);
@@ -307,7 +305,6 @@ export class Cart{
 		}
 		if(!this.id_cart) delete data._id;
     console.log("cartdata...");
-    console.log(data);
 		return data;
 	}
 
@@ -476,6 +473,7 @@ export class Cart{
 
 	public get taxAmount(): string { // getTaxAmount()
     let sum = 0;
+    if(this.is_ignoreTax) {return sum.toFixed(2);}
 		if(!this.isOutletTax) {
 			for(let product of this.products) {
 				if(!product.voided) {
@@ -640,7 +638,6 @@ export class Cart{
 			} else {
 				this.payments.push(payment);
         console.log('cart.pay...');
-        console.log(this.payments);
 			}
 		}
 	}

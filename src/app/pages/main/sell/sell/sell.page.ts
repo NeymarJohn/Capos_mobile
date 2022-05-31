@@ -28,6 +28,7 @@ import * as UtilFunc from 'src/app/_helpers/util.helper';
 import { PrintService } from 'src/app/services/print.service';
 
 import { SaleDetailComponent } from 'src/app/components/sale-detail/sale-detail.component';
+import { EditCashComponent } from 'src/app/components/edit-cash/edit-cash.component';
 
 const commands = {
   LF: '\x0a',
@@ -135,6 +136,7 @@ const commands = {
 export class SellPage implements OnInit {
   title: string = 'Sell Panel';
   user: any;
+  main_outlet: any;
   keyword: string = '';
   optionAutoComplete: AutoCompleteOptions;
   products: Product[] = [];
@@ -191,6 +193,9 @@ export class SellPage implements OnInit {
   pole1: String = "";
   pole2: String = "";
 
+  // fast discount
+  fast_discount: String = "0";
+
   constructor(
     private platform: Platform,
     private popoverController: PopoverController,
@@ -215,7 +220,12 @@ export class SellPage implements OnInit {
         this.allow_discount = user.role.permissions.includes('apply_discounts');
         this.allow_void_sales = user.role.permissions.includes('void_sales');
       }
-    })
+    });
+    this.utilService.get('sell/outlet', {is_main: true}).subscribe(result => {
+      if(result && result.body) {
+        this.main_outlet = result.body[0];
+      }
+    });
     this.optionAutoComplete = new AutoCompleteOptions();
     this.optionAutoComplete.autocomplete = 'on';
     this.optionAutoComplete.debounce = 750;
@@ -235,6 +245,7 @@ export class SellPage implements OnInit {
       this.is_mobile = width <= 576;
     });
     this.getReceiptTemplate();
+    this.getFastDiscount();
     this.loadLastSale();
   }
 
@@ -305,7 +316,6 @@ export class SellPage implements OnInit {
     this.cartService.initCart();
     if (action == 'return') {
       this.utilService.get('sale/sale', { sale_number: this.cart.origin_sale_number }).subscribe(result => {
-        console.log(result);
         if (result && result.body) {
           const cart = result.body[0];
           if (cart.returned) {
@@ -375,7 +385,6 @@ export class SellPage implements OnInit {
     if (!this.selected_cart_product) return;
     let cart_products_list: CartProduct[] = [];
     cart_products_list = this.cart.getSelectedBundleProducts();
-    console.log(cart_products_list);
     if (this.cart.store_info.preferences.confirm_delete_product) {
       this.alertService.presentConfirmDelete('Item', () => {
         cart_products_list.forEach(element => {
@@ -533,6 +542,15 @@ export class SellPage implements OnInit {
       case 'open_drawer':
         return true;
         break;
+      case 'fast_discount_item':
+        return true;
+        break;
+      case 'fast_discount_volume':
+        return true;
+        break;
+      case 'tax_exempt':
+        return true;
+        break;
       default:
         return false;
     }
@@ -541,7 +559,7 @@ export class SellPage implements OnInit {
 
   async openActionSheet(mode: string) {
     const headers = {
-      sales: 'Sale Actions', items: 'Item Actions', payment: 'Payment Actions', print: 'Print Actions', drawer:'Open Drawer'
+      sales: 'Sale Actions', items: 'Item Actions', payment: 'Payment Actions', print: 'Print Actions', drawer:'Open Drawer Actions', more: 'More Button Actions'
     };
     const buttons = {
       sales: [
@@ -575,6 +593,12 @@ export class SellPage implements OnInit {
         { text: 'Open Drawer', cssClass: 'secondary', action: 'open_drawer' },
         { text: 'Open Drawer Quick', cssClass: 'secondary', action: 'open_drawer_quick' },
         { text: 'Cancel', icon: 'close', role: 'cancel' }
+      ],
+      more: [
+        { text: 'Fast Discount (Item)', cssClass: 'secondary', action: 'fast_discount_item' },
+        { text: 'Fast Discount (Volume)', cssClass: 'secondary', action: 'fast_discount_volume' },
+        { text: 'Tax Exempt', cssClass: 'secondary', action: 'tax_exempt' },
+        { text: 'Cancel', icon: 'close', role: 'cancel' }
       ]
     }
 
@@ -603,7 +627,7 @@ export class SellPage implements OnInit {
         let action = b.action;
         let status = this.checkButtonStatus(action);
         if (!status) b.cssClass += ' disabled';
-        if (mode == 'sales' || mode == 'items' || mode == 'print' || mode == 'drawer') {
+        if (mode == 'sales' || mode == 'items' || mode == 'print' || mode == 'drawer' || mode == 'more') {
           b.handler = () => {
             this.doAction(action);
           }
@@ -685,6 +709,15 @@ export class SellPage implements OnInit {
         break;
       case 'open_drawer':
         this.openDrawer();
+        break;
+      case 'fast_discount_item':
+        this.fastDiscount(false);
+        break;
+      case 'fast_discount_volume':
+        this.fastDiscount(true);
+        break;
+      case 'tax_exempt':
+        this.taxExempt();
         break;
     }
     return true;
@@ -803,6 +836,43 @@ export class SellPage implements OnInit {
     await popover.present();
   }
 
+  fastDiscount(is_global: boolean) {
+    console.log("fast discount...");
+    if (!this.selected_cart_product && !is_global) {
+      this.toastService.show('You must to select one or more item');
+      return;
+    }
+    let data = { mode: 'percent', value: Number(this.fast_discount)};
+
+    if (!this.passed_password) {
+      this.confirmPassword(() => {
+        if (is_global) {  // fast discount volue
+          this.cartService.cart.discount = data;
+          this.cartService.cart.setGlobalDiscount();
+        } else { // fast discount item
+          let cart_products_list: CartProduct [] = [];
+          cart_products_list = this.cart.getSelectedBundleProducts();
+          cart_products_list.forEach(element => {
+            this.cart.getProductsFromBundle(element).discount = data;
+            this.cartService.cart.save();
+          });
+        }
+      });
+    } else {
+      if (is_global) {  // fast discount volue
+        this.cartService.cart.discount = data;
+        this.cartService.cart.setGlobalDiscount();
+      } else { // fast discount item
+        let cart_products_list: CartProduct [] = [];
+        cart_products_list = this.cart.getSelectedBundleProducts();
+        cart_products_list.forEach(element => {
+          this.cart.getProductsFromBundle(element).discount = data;
+          this.cartService.cart.save();
+        });
+      }
+    }
+  }
+
   async confirmPassword(callback?: Function) {
     const popover = await this.popoverController.create({
       component: ConfirmPasswordComponent,
@@ -854,7 +924,6 @@ export class SellPage implements OnInit {
         let data = result.data;
         if (data.process) {
           if (this.selected_cart_product_length > 1) {
-            console.log(this.selected_cart_product);
             let cart_products_list: CartProduct [] = [];
             cart_products_list = this.cart.getSelectedBundleProducts();
             cart_products_list.forEach(element => {
@@ -958,7 +1027,6 @@ export class SellPage implements OnInit {
 
       popover.onDidDismiss().then(result => {
         if (typeof result.data != 'undefined') {
-          console.log(result);
           let data = result.data;
           if (data.process) {
             if (this.cart.isRefund && data.amount < 0 || !this.cart.isRefund && data.amount > 0) {
@@ -1505,7 +1573,6 @@ export class SellPage implements OnInit {
 
   voidSale() {
     console.log("sell/voidsale...");
-    console.log(this.cart);
     let title = 'You are about to void this sale.';
     let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
     this.alertService.presentAlertConfirm(
@@ -1528,7 +1595,6 @@ export class SellPage implements OnInit {
     const filter = {range: 'last_sale', user_id: this.user._id};
     this.utilService.get('sale/sale', filter).subscribe(result => {
       if(result && result.body.data.length==1) {
-        console.log(result.body.data[0]);
         this.last_sale = new Cart(this.authService, this.utilService);
         this.last_sale.loadByCart(result.body.data[0]);
         // if(callback) callback();
@@ -1544,7 +1610,6 @@ export class SellPage implements OnInit {
     let code1 = "27 112 0 150 250"; //decimal
     let code2 = commands.CASH_DRAWER.CD_KICK_2;
     let code = "ESCp0û."; //ascii
-    console.log(code2);
     this.print.sendToBluetoothPrinter(printMac, code2);
   }
 
@@ -1567,7 +1632,6 @@ export class SellPage implements OnInit {
           data.private_web_address = this.user.private_web_address;
 
           this.utilService.post('cash/history', data).subscribe(result => {
-            console.log(result);
             this.openDrawerQuick();
           })
         }
@@ -1577,12 +1641,49 @@ export class SellPage implements OnInit {
   }
 
   openDrawer() {
-    if (!this.passed_password) {
-      this.confirmPassword(() => {
-        this.openDrawerNote();
-      });
-    } else {
-      this.openDrawerNote();
-    }
+    this.confirmPassword(() => {
+      this.openEditCash();
+    });
   }
+
+  async openEditCash() {
+    let cash = {
+      _id: '',
+      reasons: '',
+      transaction: 1,
+      is_credit: '1'
+    };
+    const popover = await this.popoverController.create({
+      component: EditCashComponent,
+      // event: ev,
+      cssClass: 'popover_custom fixed-width',
+      translucent: true,
+      componentProps: {cash: cash, user: this.user, main_outlet: this.main_outlet}
+    });
+
+    popover.onDidDismiss().then(result => {
+      if(typeof result.data != 'undefined') {
+        let data = result.data;
+        console.log("openeditcash result...");
+        this.openDrawerQuick();
+      }
+    });
+    await popover.present();
+  }
+
+  getFastDiscount() {
+    this.utilService.get("discount/fast_discount").subscribe(result => {
+      const data= result.body.data;
+      if(data) {
+        this.fast_discount = data.discount_percent;
+      }
+    });
+  }
+
+  taxExempt() {
+    console.log("tax exempt...");
+    this.cart.is_ignoreTax = true;
+    this.cart.save();
+  }
+
 }
