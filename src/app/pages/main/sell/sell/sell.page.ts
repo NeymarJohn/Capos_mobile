@@ -844,32 +844,16 @@ export class SellPage implements OnInit {
     }
     let data = { mode: 'percent', value: Number(this.fast_discount)};
 
-    if (!this.passed_password) {
-      this.confirmPassword(() => {
-        if (is_global) {  // fast discount volue
-          this.cartService.cart.discount = data;
-          this.cartService.cart.setGlobalDiscount();
-        } else { // fast discount item
-          let cart_products_list: CartProduct [] = [];
-          cart_products_list = this.cart.getSelectedBundleProducts();
-          cart_products_list.forEach(element => {
-            this.cart.getProductsFromBundle(element).discount = data;
-            this.cartService.cart.save();
-          });
-        }
+    if (is_global) {  // fast discount volue
+      this.cartService.cart.discount = data;
+      this.cartService.cart.setGlobalDiscount();
+    } else { // fast discount item
+      let cart_products_list: CartProduct [] = [];
+      cart_products_list = this.cart.getSelectedBundleProducts();
+      cart_products_list.forEach(element => {
+        this.cart.getProductsFromBundle(element).discount = data;
+        this.cartService.cart.save();
       });
-    } else {
-      if (is_global) {  // fast discount volue
-        this.cartService.cart.discount = data;
-        this.cartService.cart.setGlobalDiscount();
-      } else { // fast discount item
-        let cart_products_list: CartProduct [] = [];
-        cart_products_list = this.cart.getSelectedBundleProducts();
-        cart_products_list.forEach(element => {
-          this.cart.getProductsFromBundle(element).discount = data;
-          this.cartService.cart.save();
-        });
-      }
     }
   }
 
@@ -1117,7 +1101,7 @@ export class SellPage implements OnInit {
           }
         }
       }
-      this.completeSale()
+      this.completeSale();
     } else {
       this.cartService.cart.save();
     }
