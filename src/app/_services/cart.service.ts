@@ -75,6 +75,7 @@ export class CartService {
     this.utilService.get('sell/openclose', query).subscribe(async result => {
       console.log(result);
       if(result && result.body.length>0) {
+        console.log(result);
         let c = result.body[0];
         this.lastClose = new Openclose(this.authService, this.utilService);
         this.lastClose.loadDetails(c);

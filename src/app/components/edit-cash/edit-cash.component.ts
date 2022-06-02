@@ -17,7 +17,7 @@ export class EditCashComponent implements OnInit {
   form: FormGroup;
   main_outlet:any;
   user:any;
-  cash:any;  
+  cash:any;
   isSubmitted:boolean = false;
 
   constructor(
@@ -58,7 +58,7 @@ export class EditCashComponent implements OnInit {
       this.utilService.put('sell/cash', data).subscribe(async result => {
         await this.final_process(result);
       })
-    } else {     
+    } else {
       data.private_web_address = this.user.private_web_address;
       data.outlet = this.user.outlet ? this.user.outlet._id : this.main_outlet._id;
       data.user_id = this.user._id;
@@ -70,19 +70,19 @@ export class EditCashComponent implements OnInit {
   }
 
   async final_process(result) {
-    await this.loading.dismiss();    
+    await this.loading.dismiss();
     this.toastService.show(Constants.message.successSaved);
     this.popoverController.dismiss({process: true});
   }
 
   get reasonsInput(): any {return this.form.get('reasons'); }
   get reasonsInputError(): string {
-    if (this.reasonsInput.hasError('required')) {return Constants.message.requiredField; }    
+    if (this.reasonsInput.hasError('required')) {return Constants.message.requiredField; }
   }
 
   get transactionInput(): any {return this.form.get('transaction'); }
   get transactionInputError(): string {
-    if (this.transactionInput.hasError('required')) {return Constants.message.requiredField; }    
-    if (this.transactionInput.hasError('min')) {return Constants.message.invalidMinValue.replace('?', Constants.cash_transaction.min.toString()); }    
+    if (this.transactionInput.hasError('required')) {return Constants.message.requiredField; }
+    if (this.transactionInput.hasError('min')) {return Constants.message.invalidMinValue.replace('?', Constants.cash_transaction.min.toString()); }
   }
 }

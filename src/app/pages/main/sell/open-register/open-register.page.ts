@@ -19,7 +19,7 @@ import { CartService } from 'src/app/_services/cart.service';
 })
 export class OpenRegisterPage implements OnInit {
   title = {open: 'Open Register', close: 'Close Register'};
-  user: any;  
+  user: any;
   util = UtilFunc;
   form: FormGroup;
   isSubmitted: boolean = false;
@@ -28,14 +28,16 @@ export class OpenRegisterPage implements OnInit {
     private authService: AuthService,
     private utilService: UtilService,
     private loading: LoadingService,
-    private toastService: ToastService,    
-    private nav: NavController,    
+    private toastService: ToastService,
+    private nav: NavController,
     private popoverController: PopoverController,
     private alertService: AlertService,
     private cartService: CartService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    public openClose: Openclose,
+    public lastClose: Openclose,
   ) {
-    this.authService.checkPremission('close_register');    
+    this.authService.checkPremission('close_register');
     this.form = this.fb.group({
       open_value: ['', [Validators.required, Validators.min(1)]],
       open_note: ['']
@@ -43,7 +45,15 @@ export class OpenRegisterPage implements OnInit {
   }
 
   ngOnInit() {
-    
+    if('close'.includes(this.mode)) {
+      this.openClose.loadCurrent(()=>{}, ()=>{
+        this.nav.navigateForward(['main/sell/open-register']);
+      });
+    } else {
+      this.lastClose.loadCurrent(()=>{}, ()=>{
+        this.nav.navigateForward(['main/sell/open-register']);
+      });
+    }
   }
 
   public get mode():string {
@@ -54,13 +64,13 @@ export class OpenRegisterPage implements OnInit {
     }
   }
 
-  public get openClose():Openclose {
-    return this.cartService.openClose;
-  }
+  // public get openClose():Openclose {
+  //   return this.cartService.openClose;
+  // }
 
-  public get lastClose():Openclose {
-    return this.cartService.lastClose;
-  }
+  // public get lastClose():Openclose {
+  //   return this.cartService.lastClose;
+  // }
 
   async save(){
     this.isSubmitted = true;
@@ -75,34 +85,34 @@ export class OpenRegisterPage implements OnInit {
           this.toastService.show(Constants.message.failedSave);
         }
       })
-    }      
+    }
   }
 
   async openCashDetail(openClose: Openclose) {
     const popover = await this.popoverController.create({
       component: CashDetailComponent,
       // event: ev,
-      cssClass: 'popover_custom',      
+      cssClass: 'popover_custom',
       translucent: true,
       componentProps: {openClose: openClose}
     });
 
-    await popover.present();   
+    await popover.present();
   }
 
   closeRegister(){
     let title = 'Close Register';
     let msg = 'Are you sure to want to close this register?';
-    this.alertService.presentAlertConfirm(title, msg, () => {      
+    this.alertService.presentAlertConfirm(title, msg, () => {
       this.cartService.closeRegister(() => {
         this.toastService.show('Register Closed successfully.');
-      })      
+      })
     });
   }
 
   get floatInput(): any {return this.form.get('open_value'); }
-  get floatInputError(): string | void {    
+  get floatInputError(): string | void {
     if (this.floatInput.hasError('required')) { return Constants.message.requiredField; }
     if (this.floatInput.hasError('min')) { return Constants.message.invalidMinValue.replace('?', Constants.open_value.min.toString()); }
-  } 
+  }
 }
