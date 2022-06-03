@@ -839,7 +839,7 @@ export class SellPage implements OnInit {
 
   fastDiscount(is_global: boolean) {
     console.log("fast discount...");
-    if (!this.selected_cart_product) {
+    if (!this.selected_cart_product && !is_global) {
       this.toastService.show('You must to select one or more item');
       return;
     }
