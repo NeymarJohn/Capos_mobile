@@ -154,6 +154,7 @@ export class SellPage implements OnInit {
   allow_print_label: boolean = false;
 
   last_sale: Cart = null;
+  change: any = 0;
 
   printers: any[] = [];
 
@@ -1014,7 +1015,9 @@ export class SellPage implements OnInit {
           let data = result.data;
           if (data.process) {
             if (this.cart.isRefund && data.amount < 0 || !this.cart.isRefund && data.amount > 0) {
-              this.pay(pay_mode, data.amount);
+              const pay_amount = data.amount>=this.cart.total_to_pay?this.cart.total_to_pay:data.amount;
+              this.cart._change = data.amount - this.cart.total_to_pay > 0 ? data.amount - this.cart.total_to_pay : 0;
+              this.pay(pay_mode, pay_amount);
             }
           }
         }
@@ -1082,6 +1085,7 @@ export class SellPage implements OnInit {
   }
 
   private _pay(pay_mode: string, pay_amount: number) {
+    console.log("[LOG] pay mode: " + pay_mode + ", pay_amount: " + pay_amount);
     this.cart.pay(pay_mode, pay_amount);
     this.cartService.processCustomerBalance(pay_mode, pay_amount);
     if (this.cart.able_to_complete) {
@@ -1473,6 +1477,7 @@ export class SellPage implements OnInit {
           cssClass: 'popover_custom fixed-width',
           translucent: true,
           componentProps: { change: UtilFunc.getPriceWithCurrency(this.cart.change) }
+          // componentProps: { change: UtilFunc.getPriceWithCurrency(this.change) }
         });
 
         popover.onDidDismiss().then(result => {

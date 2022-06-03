@@ -58,15 +58,16 @@ export class Cart{
 	origin_sale_number:string = '';
 
 	util = UtilFunc;
-	all_products:CartProduct[] = [];
+	all_products: CartProduct[] = [];
 	main_outlet: any;
 	user: any;
 	store_info: Store = null;
-	allBundles:Bundle[] = [];
-	bundle_products:IBundleProduct[] = [];
-	register_obj:any = null;
+	allBundles: Bundle[] = [];
+	bundle_products: IBundleProduct[] = [];
+	register_obj: any = null;
 
-  is_ignoreTax = false;
+  is_ignoreTax: boolean = false;
+  _change: any = 0;
 
 	constructor(
 		private authService: AuthService,
@@ -529,9 +530,10 @@ export class Cart{
 
 	public get change(): number {
 		let a = 0;
-		if(this.total_paid > this.totalIncl) {
-			 a = this.total_paid - this.totalIncl;
-		}
+		// if(this.total_paid > this.totalIncl) {
+		// 	 a = this.total_paid - this.totalIncl;
+		// }
+    a = this._change;
 		return parseFloat(a.toFixed(2));
 	}
 
