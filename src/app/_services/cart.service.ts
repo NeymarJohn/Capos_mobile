@@ -73,9 +73,7 @@ export class CartService {
     };
     if(!this.user.outlet) delete query.outlet;
     this.utilService.get('sell/openclose', query).subscribe(async result => {
-      console.log(result);
       if(result && result.body.length>0) {
-        console.log(result);
         let c = result.body[0];
         this.lastClose = new Openclose(this.authService, this.utilService);
         this.lastClose.loadDetails(c);
@@ -131,15 +129,13 @@ export class CartService {
       this.new_sale.origin_status = this.new_sale.sale_status;
       this.new_sale.origin_sale_number = this.new_sale.sale_number;
       this.new_sale._id = '';
-      // this.new_sale.sale_number = UtilFunc.genRandomOrderString(8);
-    }
-    console.log("new sale...");
-    console.log(this.new_sale);
-    this.cart.loadByCart(this.new_sale);
-    if(this.new_sale.cart_mode == 'return') {
-      if(this.action == 'return') {
-        this.cart.setRefund();
-      }
+      this.new_sale.sale_number = UtilFunc.genRandomOrderString(8);
+    }    
+    this.cart.loadByCart(this.new_sale); 
+    if(this.new_sale.cart_mode == 'return') {   
+      if(this.action == 'return') {   
+        this.cart.setRefund();            
+      }    
     }
     this.new_sale = null;
     this.action = null;
@@ -153,11 +149,9 @@ export class CartService {
   }
 
   newCart() {
-    // this.removeProductAllFromCart();
     this.cart.delete(() => {
       this.cart.init();
-    });
-    // this.loadCart(null, null);
+    })
   }
 
   processCustomerCredit() {

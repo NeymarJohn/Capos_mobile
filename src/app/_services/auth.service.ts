@@ -54,11 +54,11 @@ export class AuthService {
   }
 
   signIn(user:any): any {
-    console.log(this.getUrl('auth/login'))
+    console.log(this.getUrl('auth/login'));
     return this.http.post(this.getUrl('auth/login'), user).pipe(map(
       (result: any) => {
         if(!result.error && result.token) {
-          const decoded = this.jwtHelper.decodeToken(result.token);          
+          const decoded = this.jwtHelper.decodeToken(result.token);
           this.setCurrentUser(decoded);
           this.setToken(result.token);
           this.getMainMenu();
@@ -70,7 +70,7 @@ export class AuthService {
     ));
   }
 
-  forgotPassword(user:any): any {    
+  forgotPassword(user:any): any {
     return this.http.post(this.getUrl('auth/forgot_password'), user);
   }
 
@@ -112,7 +112,7 @@ export class AuthService {
       'manage_order': ['perform_supplier', 'perform_stock', 'perform_inventory'],
       'setup_general' : ['manage_keys']
     }
-    let user = this.getCurrentUser;    
+    let user = this.getCurrentUser;
     let f:boolean = true;
     if(user.role) {
       for(let p of page_permissions[page]) {
@@ -124,7 +124,7 @@ export class AuthService {
     } else {
       f = false;
     }
-    
+
     if(!f) {
       this.toastService.show('You have no permission for this page');
       this.nav.navigateForward(['/dashboard/home']);
