@@ -80,90 +80,47 @@ export class PaymentReportsPage implements OnInit {
       axios.get(`${APP_CONSTANTS.API_URL}sale/payments`, {params: filter}).then(resp => {
         this.rows = [];
         let result = resp.data;
-        if(result) {
-          let date = '', index = 0;
-          for(let c of result.sales) {
-            let cart = new Cart(this.authService, this.utilService);
-            cart.loadByCart(c);
-            date = UtilFunc.handleDate(cart.created_at);
-            index = this.dates.findIndex(item=>item==date);
-            if(index==-1) { this.dates.push(date); }
-            this.salesData.push(cart);
-          }
-          for(let r of result.returns) {
-            let cart = new Cart(this.authService, this.utilService);
-            cart.loadByCart(r);
-            date = UtilFunc.handleDate(cart.created_at);
-            index = this.dates.findIndex(item=>item==date);
-            if(index==-1) this.dates.push(date);
-            this.returnsData.push(cart);
-          }
-          for(let v of result.voided) {
-            let cart = new Cart(this.authService, this.utilService);
-            cart.loadByCart(v);
-            date = UtilFunc.handleDate(cart.created_at);
-            index = this.dates.findIndex(item=>item==date);
-            if(index==-1) this.dates.push(date);
-            this.voidedData.push(cart);
-          }
-          for(let o of result.openclose) {
-            date = UtilFunc.handleDate(o.created_at);
-            index = this.dates.findIndex(item=>item==date);
-            if(index==-1) this.dates.push(date);
-            this.openClose.push(o);
-          }
-          for(let c of result.cash) {
-            date = UtilFunc.handleDate(c.created_at);
-            index = this.dates.findIndex(item=>item==date);
-            if(index==-1) this.dates.push(date);
-            this.cashData.push(c);
-          }
-          this.getTableData();
-        }
+        // if(result) {
+        //   let date = '', index = 0;
+        //   for(let c of result.sales) {
+        //     let cart = new Cart(this.authService, this.utilService);
+        //     cart.loadByCart(c);
+        //     date = UtilFunc.handleDate(cart.created_at);
+        //     index = this.dates.findIndex(item=>item==date);
+        //     if(index==-1) { this.dates.push(date); }
+        //     this.salesData.push(cart);
+        //   }
+        //   for(let r of result.returns) {
+        //     let cart = new Cart(this.authService, this.utilService);
+        //     cart.loadByCart(r);
+        //     date = UtilFunc.handleDate(cart.created_at);
+        //     index = this.dates.findIndex(item=>item==date);
+        //     if(index==-1) this.dates.push(date);
+        //     this.returnsData.push(cart);
+        //   }
+        //   for(let v of result.voided) {
+        //     let cart = new Cart(this.authService, this.utilService);
+        //     cart.loadByCart(v);
+        //     date = UtilFunc.handleDate(cart.created_at);
+        //     index = this.dates.findIndex(item=>item==date);
+        //     if(index==-1) this.dates.push(date);
+        //     this.voidedData.push(cart);
+        //   }
+        //   for(let o of result.openclose) {
+        //     date = UtilFunc.handleDate(o.created_at);
+        //     index = this.dates.findIndex(item=>item==date);
+        //     if(index==-1) this.dates.push(date);
+        //     this.openClose.push(o);
+        //   }
+        //   for(let c of result.cash) {
+        //     date = UtilFunc.handleDate(c.created_at);
+        //     index = this.dates.findIndex(item=>item==date);
+        //     if(index==-1) this.dates.push(date);
+        //     this.cashData.push(c);
+        //   }
+        //   this.getTableData();
+        // }
       });
-      // this.utilService.get('sale/payments', filter).subscribe(result => {
-      //   this.rows = [];
-      //   if(result && result.body) {
-      //     let date = '', index = 0;
-      //     for(let c of result.body.sales) {
-      //       let cart = new Cart(this.authService, this.utilService);
-      //       cart.loadByCart(c);
-      //       date = UtilFunc.handleDate(cart.created_at);
-      //       index = this.dates.findIndex(item=>item==date);
-      //       if(index==-1) this.dates.push(date);
-      //       this.salesData.push(cart);
-      //     }
-      //     for(let r of result.body.returns) {
-      //       let cart = new Cart(this.authService, this.utilService);
-      //       cart.loadByCart(r);
-      //       date = UtilFunc.handleDate(cart.created_at);
-      //       index = this.dates.findIndex(item=>item==date);
-      //       if(index==-1) this.dates.push(date);
-      //       this.returnsData.push(cart);
-      //     }
-      //     for(let v of result.body.voided) {
-      //       let cart = new Cart(this.authService, this.utilService);
-      //       cart.loadByCart(v);
-      //       date = UtilFunc.handleDate(cart.created_at);
-      //       index = this.dates.findIndex(item=>item==date);
-      //       if(index==-1) this.dates.push(date);
-      //       this.voidedData.push(cart);
-      //     }
-      //     for(let o of result.body.openclose) {
-      //       date = UtilFunc.handleDate(o.created_at);
-      //       index = this.dates.findIndex(item=>item==date);
-      //       if(index==-1) this.dates.push(date);
-      //       this.openClose.push(o);
-      //     }
-      //     for(let c of result.body.cash) {
-      //       date = UtilFunc.handleDate(c.created_at);
-      //       index = this.dates.findIndex(item=>item==date);
-      //       if(index==-1) this.dates.push(date);
-      //       this.cashData.push(c);
-      //     }
-      //     this.getTableData();
-      //   }
-      // })
     } else {
       this.getTableData();
     }

@@ -84,14 +84,14 @@ export class RegisterClosuresPage implements OnInit {
       // this.utilService.get('sell/openclose', filter).subscribe(result => {
       axios.get(`${APP_CONSTANTS.API_URL}sell/openclose`, {params: filter}).then(res => {
         let result = res.data;
-        if(result) {
-          for(let s of result) {
-            let openClose = new Openclose(this.authService, this.utilService);
-            openClose.loadDetails(s);
-            this.allData.push(openClose);
-          }
-        }
-        this.getTableData();
+        // if(result) {
+        //   for(let s of result) {
+        //     let openClose = new Openclose(this.authService, this.utilService);
+        //     openClose.loadDetails(s);
+        //     this.allData.push(openClose);
+        //   }
+        // }
+        //   this.getTableData();
       });
     } else {
       this.getTableData();

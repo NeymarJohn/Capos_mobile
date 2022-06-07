@@ -81,15 +81,15 @@ export class SalesReportsPage implements OnInit {
       axios.get(`${APP_CONSTANTS.API_URL}sale/sale`, {params: this.filter}).then(res => {
         this.rows = [];
         let result = res.data;
-        if(result) {
-          for(let s of result) {
-            s.date = this.util.handleDate(s.created_at);
-            let index = this.dates.findIndex(item=>item==s.date);
-            if(index==-1) this.dates.push(s.date);
-            this.allData.push(s);
-          }
-          this.getTableData();
-        }
+        // if(result) {
+        //   for(let s of result) {
+        //     s.date = this.util.handleDate(s.created_at);
+        //     let index = this.dates.findIndex(item=>item==s.date);
+        //     if(index==-1) this.dates.push(s.date);
+        //     this.allData.push(s);
+        //   }
+        //   this.getTableData();
+        // }
       });
     } else {
       this.getTableData();

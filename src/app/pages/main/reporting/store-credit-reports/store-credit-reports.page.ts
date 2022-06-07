@@ -34,12 +34,12 @@ export class StoreCreditReportsPage implements OnInit {
     sort_field: 'customer',
     sort_order: 'asc'
   };
-  rows:any[];  
+  rows:any[];
   all_columns:any[] = [
     {prop: 'customer', name: 'Customer', sortable: true, checked: true},
     {prop: 'issued', name: 'Total Issued', sortable: true, checked: true},
     {prop: 'redeemed', name: 'Total Redeemed', sortable: true, checked: true},
-    {prop: 'credit', name: 'Balance', sortable: true, checked: true}    
+    {prop: 'credit', name: 'Balance', sortable: true, checked: true}
   ];
   show_columns:any[] = [2, 3, 4];
 
@@ -50,21 +50,21 @@ export class StoreCreditReportsPage implements OnInit {
   ) { }
 
   ngOnInit() {
-   this.search(); 
+   this.search();
   }
 
   search() {
     if(this.allData.length == 0) {
       this.loading = true;
       this.utilService.get('customers/customer',{}).subscribe(result => {
-        if(result && result.body) {
-          for(let c of result.body) {
-            let customer = new Customer(this.authService, this.utilService);
-            customer.loadDetails(c);          
-            this.allData.push(customer);
-          }        
-        }
-        this.getTableData();
+        // if(result && result.body) {
+        //   for(let c of result.body) {
+        //     let customer = new Customer(this.authService, this.utilService);
+        //     customer.loadDetails(c);
+        //     this.allData.push(customer);
+        //   }
+        // }
+        // this.getTableData();
       })
     } else {
       this.getTableData();
@@ -77,7 +77,7 @@ export class StoreCreditReportsPage implements OnInit {
       let c = true;
       if(this.filter.customer) {
         c = c && customer._id == this.filter.customer;
-      }      
+      }
       if(!c) continue;
       let data:IData = {
         customer: customer.data.name + ' (' + customer.data.email + ')',
@@ -110,18 +110,18 @@ export class StoreCreditReportsPage implements OnInit {
   _onSort() {
     let prop = this.filter.sort_field;
     let dir = this.filter.sort_order;
-    const tableData = [...this.tableData];      
+    const tableData = [...this.tableData];
     tableData.sort((a, b)=> {
       if(prop == 'customer') {
         return a[prop].localeCompare(b[prop]) * (dir === 'desc' ? -1 : 1);
       } else {
         return (a[prop] - b[prop]) * (dir === 'desc' ? -1 : 1);
-      }        
+      }
     })
     this.tableData = tableData;
   }
 
-  onSort(sort:any) {    
+  onSort(sort:any) {
     this.loading = true;
     this.filter.sort_field = sort.prop;
     this.filter.sort_order = sort.dir;
@@ -132,17 +132,17 @@ export class StoreCreditReportsPage implements OnInit {
     }, 200);
   }
 
-  async openSearch() {    
+  async openSearch() {
     const popover = await this.popoverController.create({
       component: SearchStoreCreditComponent,
       // event: ev,
-      cssClass: 'popover_custom',      
+      cssClass: 'popover_custom',
       translucent: true,
       componentProps: {filter: this.filter}
     });
 
-    popover.onDidDismiss().then(result => {      
-      if(typeof result.data != 'undefined') {        
+    popover.onDidDismiss().then(result => {
+      if(typeof result.data != 'undefined') {
         let data = result.data;
         if(data.process && data.filter) {
           for(let key in data.filter) {
@@ -153,7 +153,7 @@ export class StoreCreditReportsPage implements OnInit {
       }
     });
 
-    await popover.present(); 
+    await popover.present();
   }
 
   public get totalIssued(): string {
@@ -175,8 +175,8 @@ export class StoreCreditReportsPage implements OnInit {
     return [
       {label: 'Total Issued', value: this.totalIssued},
       {label: 'Total Redeemed', value: this.totalRedeemed},
-      {label: 'Balance', value: this.totalCredit} 
+      {label: 'Balance', value: this.totalCredit}
     ];
   }
-  
+
 }
