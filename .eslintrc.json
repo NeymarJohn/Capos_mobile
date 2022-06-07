@@ -41,7 +41,39 @@
     {
       "files": ["*.html"],
       "extends": ["plugin:@angular-eslint/template/recommended"],
-      "rules": {}
+      "rules": {
+        "no-cond-assign": ["off"],
+        "no-console": ["off"],
+        "no-constant-condition": ["off"],
+        "no-control-regex": ["off"],
+        "no-debugger": ["off"],
+        "no-dupe-args": ["off"],
+        "no-dupe-keys": ["off"],
+        "no-duplicate-case": ["off"],
+        "no-empty": ["off"],
+        "no-empty-character-class": ["off"],
+        "no-ex-assign": ["off"],
+        "no-extra-boolean-cast": ["off"],
+        "no-extra-parens": ["off"],
+        "no-extra-semi": ["off"],
+        "no-func-assign": ["off"],
+        "no-inner-declarations": ["off"],
+        "no-invalid-regexp": ["off"],
+        "no-irregular-whitespace": ["off"],
+        "no-negated-in-lhs": ["off"],
+        "no-obj-calls": ["off"],
+        "no-regex-spaces": ["off"],
+        "no-sparse-arrays": ["off"],
+        "no-unexpected-multiline": ["off"],
+        "no-unreachable": ["off"],
+        "use-isnan": ["off"],
+        "valid-jsdoc": ["off"],
+        "valid-typeof": ["off"],
+        "no-unsafe-finally": ["off"],
+        "no-trailing-spaces": ["warn", {"skipBlankLines": true, "ignoreComments": true}],
+        "no-underscore-dangle": ["off"],
+        "no-trailing-whitespace": false
+      }
     }
   ]
 }
