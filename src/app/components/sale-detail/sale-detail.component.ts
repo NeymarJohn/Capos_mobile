@@ -219,8 +219,6 @@ export class SaleDetailComponent implements OnInit {
   }
 
   voidSale(sale: Cart) {
-    console.log("sale-detail/voidsale...");
-    console.log(sale);
     let title = 'You are about to void this sale.';
     let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
     this.alertService.presentAlertConfirm(title, msg, () => {

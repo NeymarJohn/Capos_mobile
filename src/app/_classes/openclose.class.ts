@@ -97,10 +97,8 @@ export class Openclose{
         if(!this.user || !this.user.outlet) delete query.outlet;
         this.init();
         this.utilService.get('sell/openclose', query).subscribe(result => {
-          console.log(">> sell/oencloase");
-          console.log(result);
-            if(result && result.body && result.body.length>0) {
-                this.loadDetails(result.body[0]);
+            if(result && result.body && result.body.length>0) {                
+                this.loadDetails(result.body[0]);                                
                 success(this);
             } else {
                 if(noexist) noexist();
@@ -136,8 +134,6 @@ export class Openclose{
     }
 
     loadDetails(details:any) {
-      console.log('>> load details');
-      console.log(details);
         this._id = details._id;
         this.uid = details.uid;
         this.user_id = details.user_id;

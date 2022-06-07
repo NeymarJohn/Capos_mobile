@@ -4,6 +4,8 @@ import * as UtilFunc from 'src/app/_helpers/util.helper';
 import { UtilService } from 'src/app/_services/util.service';
 import { PopoverController } from '@ionic/angular';
 import { SearchSalesReportComponent } from 'src/app/components/search-sales-report/search-sales-report.component';
+import axios from 'axios';
+import { APP_CONSTANTS } from 'src/app/_configs/constants';
 
 interface IData{
   date: string,
@@ -60,8 +62,6 @@ export class SalesReportsPage implements OnInit {
 
   ngOnInit() {
     this.authService.currentUser.subscribe(user => {
-      console.log("[LOG] user info:");
-      console.log(user);
       this.user = user;
       if(user.role && user.role.name != 'Admin') {
         this.only_own_sales = user.role.permissions.includes('only_own_sales');
@@ -77,12 +77,12 @@ export class SalesReportsPage implements OnInit {
     }
     this.loading = true;
     if(this.allData.length == 0) {
-      this.utilService.get('sale/sale', this.filter).subscribe(result => {
-        console.log("[LOG] sale/sale:");
-        console.log(result);
+      // this.utilService.get('sale/sale', this.filter).subscribe(result => {
+      axios.get(`${APP_CONSTANTS.API_URL}sale/sale`, {params: this.filter}).then(res => {
         this.rows = [];
-        if(result && result.body) {
-          for(let s of result.body) {
+        let result = res.data;
+        if(result) {
+          for(let s of result) {
             s.date = this.util.handleDate(s.created_at);
             let index = this.dates.findIndex(item=>item==s.date);
             if(index==-1) this.dates.push(s.date);
@@ -90,7 +90,7 @@ export class SalesReportsPage implements OnInit {
           }
           this.getTableData();
         }
-      })
+      });
     } else {
       this.getTableData();
     }
