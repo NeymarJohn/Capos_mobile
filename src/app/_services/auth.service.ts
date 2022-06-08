@@ -54,7 +54,6 @@ export class AuthService {
   }
 
   signIn(user:any): any {
-    console.log(this.getUrl('auth/login'));
     return this.http.post(this.getUrl('auth/login'), user).pipe(map(
       (result: any) => {
         if(!result.error && result.token) {

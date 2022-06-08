@@ -7,7 +7,7 @@ import { APP_CONSTANTS } from '../_configs/constants';
 export interface IVariantProduct{
     _id: string,
     name: string,
-    sku: string,            
+    sku: string,
     supplier_code: string,
     supply_price: number,
     retail_price: number,
@@ -29,7 +29,7 @@ export interface IVariants{
 @Injectable({
     providedIn: 'root'
 })
-export class Product{	
+export class Product{
 	_id: string = '';
     data: {
         user_id: any,
@@ -56,7 +56,7 @@ export class Product{
         tracking_inv: boolean,
         variant_inv: boolean,
         tag: string[],
-        images: string[],    
+        images: string[],
         variant_products:IVariantProduct[],
         variants: IVariants[],
         feature:{featured:boolean, new_product: boolean, on_sale: boolean, hot_offer: boolean},
@@ -81,19 +81,19 @@ export class Product{
         required_age: number,
         package_style: boolean,
         discount_type: boolean,
-        deposit_return: boolean,        
+        deposit_return: boolean,
     }
-    util = UtilFunc;	
+    util = UtilFunc;
 	store_info:any;
 
     constructor(
 		public authService: AuthService,
-		public utilService: UtilService) {	
-		
-		this.utilService.get('auth/store', {}).subscribe(result => {    			
-			this.store_info = result.body;      
+		public utilService: UtilService) {
+
+		this.utilService.get('auth/store', {}).subscribe(result => {
+			this.store_info = result.body;
 		});
-        
+
 		this.init();
 	}
 
@@ -124,7 +124,7 @@ export class Product{
             tracking_inv: false,
             variant_inv: false,
             tag: [],
-            images: [],    
+            images: [],
             variant_products:[],
             variants: [],
             feature:{featured: false, new_product: false, on_sale: false, hot_offer: false},
@@ -152,13 +152,13 @@ export class Product{
         };
     }
 
-    loadById(_id:string, success?:Function, noexist?:Function) {		
+    loadById(_id:string, success?:Function, noexist?:Function) {
 		this.utilService.get('product/product', {range:'_id', _id:_id}).subscribe(result => {
 			if(result && result.body) {
 				const details = result.body;
 				this.loadDetails(details);
 				if(success) success(this);
-			} else {				
+			} else {
 				if(noexist) {
 					noexist();
 				}
@@ -173,10 +173,10 @@ export class Product{
 	loadDetails(details:any) {
         if(details._id) {
             this._id = details._id;
-        } 
-		let keysToRemvoe = [ '__v', 'is_deleted'];		
+        }
+		let keysToRemvoe = [ '__v', 'is_deleted'];
 		for(let key of keysToRemvoe) delete details[key];
-		this.data = Object.assign(this.data, details);		
+		this.data = Object.assign(this.data, details);
 	}
 
     getDetails() {
@@ -196,7 +196,7 @@ export class Product{
 		const data = this.getDetails();
 		if(this._id) {
 			data._id = this._id;
-			this.utilService.put('product/product', data).subscribe(result => {				
+			this.utilService.put('product/product', data).subscribe(result => {
 				if(result.body.status !== 'already_exist') {
 					this.loadDetails(result.body);
 				}
@@ -220,7 +220,7 @@ export class Product{
 	}
 
 	delete(callback?:Function, err?:Function) {
-		this.utilService.delete('product/product?_id=' + this._id).subscribe(response => {			
+		this.utilService.delete('product/product?_id=' + this._id).subscribe(response => {
 			callback();
 		}, error => {
 			if(err) err();

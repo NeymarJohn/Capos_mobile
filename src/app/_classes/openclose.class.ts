@@ -87,7 +87,6 @@ export class Openclose{
     }
 
     loadCurrent(success?:Function, noexist?:Function) {
-      console.log("openclose loadcurrent...");
         const query = {
             private_web_address: this.user? this.user.private_web_address: null,
             outlet: (this.user && this.user.outlet) ? this.user.outlet._id : this.main_outlet._id,
@@ -97,8 +96,8 @@ export class Openclose{
         if(!this.user || !this.user.outlet) delete query.outlet;
         this.init();
         this.utilService.get('sell/openclose', query).subscribe(result => {
-            if(result && result.body && result.body.length>0) {                
-                this.loadDetails(result.body[0]);                                
+            if(result && result.body && result.body.length>0) {
+                this.loadDetails(result.body[0]);
                 success(this);
             } else {
                 if(noexist) noexist();

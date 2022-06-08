@@ -237,15 +237,12 @@ export class Cart{
 	}
 
 	save(callback?:Function) {
-    console.log('save...');
 		const data = this.saleData;
-    console.log("sale data...");
 		if(!data._id) {
 			delete data._id;
 			delete data.created_at;
 		}
     this.utilService.post('sale/sale', data).subscribe(result => {
-      console.log("sale/sale result...");
 			const cart = result.body.result;
 			let saved_cart = this._id == cart._id;
 			this._id = cart._id;
@@ -254,7 +251,6 @@ export class Cart{
 			this.getBundleProducts();
 			if(!saved_cart || this.isVoid) {
 				this.utilService.post('sell/cart', this.cartData).subscribe(cart => {
-          console.log('sell/cart:' + this.cartData);
 					this.id_cart = cart.body.result._id;
 					this._saveCallback(callback);
 				})
@@ -265,11 +261,9 @@ export class Cart{
 	}
 
 	_saveCallback(callback?:Function) {
-    console.log("_savecallback...");
 		// if(this.sale_status == 'return_completed') {
 		if(this.sale_status == 'return_completed' || this.sale_status == 'new' || this.cart_mode == 'return') {
 			this.utilService.post('sale/set_returned_sale', {sale_number: this.origin_sale_number}).subscribe(result => {
-        console.log("sale/set_returned_sale: " + this.origin_sale_number);
 				if(callback) callback(result);
 			})
 		} else {
@@ -278,18 +272,14 @@ export class Cart{
 	}
 
 	delete(callback?:Function) {
-    console.log('cart/delete...');
 		if(this.id_cart) {
 			this.utilService.put('sell/cart', {_id: this.id_cart, sell: null}).subscribe(result => {
-        console.log("sell/cart/" + this.id_cart + ":" + result);
 				if(callback) callback(result);
 			})
 		}
 	}
 
 	deleteSale(callback?:Function) {
-    console.log('cart/deletesale...');
-    console.log(this._id);
 		if(this._id) {
 			this.utilService.delete('sale/sale?_id=' + this._id).subscribe(result => {
 				this.delete(callback)
@@ -305,7 +295,6 @@ export class Cart{
 			sale: this._id
 		}
 		if(!this.id_cart) delete data._id;
-    console.log("cartdata...");
 		return data;
 	}
 
@@ -639,7 +628,6 @@ export class Cart{
 				this.voided_payments.push(payment);
 			} else {
 				this.payments.push(payment);
-        console.log('cart.pay...');
 			}
 		}
 	}

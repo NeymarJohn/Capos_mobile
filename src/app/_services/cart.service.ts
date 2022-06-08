@@ -63,7 +63,6 @@ export class CartService {
   }
 
   getLastClose() {
-    console.log("getlastclose...");
     this.lastClose = null;
     const query = {
       private_web_address: this.user.private_web_address,
@@ -130,12 +129,12 @@ export class CartService {
       this.new_sale.origin_sale_number = this.new_sale.sale_number;
       this.new_sale._id = '';
       this.new_sale.sale_number = UtilFunc.genRandomOrderString(8);
-    }    
-    this.cart.loadByCart(this.new_sale); 
-    if(this.new_sale.cart_mode == 'return') {   
-      if(this.action == 'return') {   
-        this.cart.setRefund();            
-      }    
+    }
+    this.cart.loadByCart(this.new_sale);
+    if(this.new_sale.cart_mode == 'return') {
+      if(this.action == 'return') {
+        this.cart.setRefund();
+      }
     }
     this.new_sale = null;
     this.action = null;
@@ -379,7 +378,6 @@ export class CartService {
   }
 
   completeSale(callback:Function): void {
-    console.log('cart.service/completesale...');
     const payment_status = this.cart.payment_status;
     const sale_status = this.cart.sale_status;
     const aa = ['layby', 'on_account'];

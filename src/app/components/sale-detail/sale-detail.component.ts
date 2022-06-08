@@ -200,7 +200,6 @@ export class SaleDetailComponent implements OnInit {
   }
 
   async handleAction(sale: Cart) {
-    console.log("sale-detail/handleAction...");
     let action = 'new';
     if (this.completed_status.includes(sale.sale_status)) {
         action = 'return';
@@ -255,7 +254,6 @@ export class SaleDetailComponent implements OnInit {
   async printSale() {
     const printMac = this.printers[0]?.id;
     const node = await document.getElementById("sale-detail-print");
-    console.log(this.cart)
 
     const date = new Date(Date.now())
     const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();

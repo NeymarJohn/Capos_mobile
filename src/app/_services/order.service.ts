@@ -23,36 +23,35 @@ export class OrderService {
   }
 
   init(data?: any) {
-    this.order = new Order(this.authService, this.utilService);    
+    this.order = new Order(this.authService, this.utilService);
     if(data) {
       this.order.data = data;
     }
   }
 
-  async addProduct(product:Product) {            
-    if(product.data.variant_inv) {      
+  async addProduct(product:Product) {
+    if(product.data.variant_inv) {
       const popover = await this.popoverController.create({
         component: OrderVariantsComponent,
         // event: ev,
-        cssClass: 'popover_custom',      
+        cssClass: 'popover_custom',
         translucent: true,
         componentProps: {product: product, type: 'purchase'}
       });
-  
-      popover.onDidDismiss().then(result => {      
-        if(typeof result.data != 'undefined') {        
+
+      popover.onDidDismiss().then(result => {
+        if(typeof result.data != 'undefined') {
           let data1 = result.data;
           if(data1.process) {
-            console.log(data1.products);
-            for(let p of data1.products) {   
+            for(let p of data1.products) {
               this.order.addProduct(p);
             }
-          } 
-        }          
+          }
+        }
       });
       await popover.present();
 
-    } else {      
+    } else {
       this.order.addProduct(Order.getNewOrderProduct(product));
     }
   }
@@ -60,7 +59,7 @@ export class OrderService {
   save(data:any, callback?:Function, err?:Function) {
     Object.keys(data).forEach(key => {
       this.order.data[key] = data[key];
-    });    
+    });
     this.order.save(() => {
       this.changed = true;
       if(callback) callback();

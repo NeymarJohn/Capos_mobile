@@ -45,6 +45,7 @@ export class PaymentReportsPage implements OnInit {
     sort_field: 'date',
     sort_order: 'desc'
   }
+  summary:any[];
   rows:any[];
   all_columns:any[] = [
     {prop: 'date', name: 'Date', sortable: true, checked: true},
@@ -69,7 +70,7 @@ export class PaymentReportsPage implements OnInit {
     this.authService.currentUser.subscribe(user => {
       this.user = user;
     });
-    this.search();
+    // this.search();
   }
 
   search() {
@@ -121,52 +122,13 @@ export class PaymentReportsPage implements OnInit {
           this.getTableData();
         }
       });
-      // this.utilService.get('sale/payments', filter).subscribe(result => {
-      //   this.rows = [];
-      //   if(result && result.body) {
-      //     let date = '', index = 0;
-      //     for(let c of result.body.sales) {
-      //       let cart = new Cart(this.authService, this.utilService);
-      //       cart.loadByCart(c);
-      //       date = UtilFunc.handleDate(cart.created_at);
-      //       index = this.dates.findIndex(item=>item==date);
-      //       if(index==-1) this.dates.push(date);
-      //       this.salesData.push(cart);
-      //     }
-      //     for(let r of result.body.returns) {
-      //       let cart = new Cart(this.authService, this.utilService);
-      //       cart.loadByCart(r);
-      //       date = UtilFunc.handleDate(cart.created_at);
-      //       index = this.dates.findIndex(item=>item==date);
-      //       if(index==-1) this.dates.push(date);
-      //       this.returnsData.push(cart);
-      //     }
-      //     for(let v of result.body.voided) {
-      //       let cart = new Cart(this.authService, this.utilService);
-      //       cart.loadByCart(v);
-      //       date = UtilFunc.handleDate(cart.created_at);
-      //       index = this.dates.findIndex(item=>item==date);
-      //       if(index==-1) this.dates.push(date);
-      //       this.voidedData.push(cart);
-      //     }
-      //     for(let o of result.body.openclose) {
-      //       date = UtilFunc.handleDate(o.created_at);
-      //       index = this.dates.findIndex(item=>item==date);
-      //       if(index==-1) this.dates.push(date);
-      //       this.openClose.push(o);
-      //     }
-      //     for(let c of result.body.cash) {
-      //       date = UtilFunc.handleDate(c.created_at);
-      //       index = this.dates.findIndex(item=>item==date);
-      //       if(index==-1) this.dates.push(date);
-      //       this.cashData.push(c);
-      //     }
-      //     this.getTableData();
-      //   }
-      // })
     } else {
       this.getTableData();
     }
+  }
+
+  ionViewDidEnter() {
+    this.search();
   }
 
   getTableData() {
@@ -220,6 +182,7 @@ export class PaymentReportsPage implements OnInit {
     }
     this._onSort();
     this.getRowData();
+    this.loadSummary();
     this.loading = false;
   }
 
@@ -330,7 +293,7 @@ export class PaymentReportsPage implements OnInit {
     return UtilFunc.getPriceWithCurrency(sum);
   }
 
-  public get summary():any[] {
+  public get _summary():any[] {
     return [
       {label: 'Store Credit', value: this.totalStoreCredit},
       {label: 'Cash(concealed total)', value: this.totalConceled},
@@ -341,6 +304,19 @@ export class PaymentReportsPage implements OnInit {
       {label: 'Voided', value: this.totalVoided},
       {label: 'Total', value: this.totalTotal},
     ];
+  }
+
+  loadSummary() {
+    this.summary = [
+      {label: 'Store Credit', value: this.totalStoreCredit},
+      {label: 'Cash(concealed total)', value: this.totalConceled},
+      {label: 'Cash', value: this.totalCash},
+      {label: 'Credit', value: this.totalCreditCard},
+      {label: 'Debit', value: this.totalDebitCard},
+      {label: 'Refunds', value: this.totalRefunds},
+      {label: 'Voided', value: this.totalVoided},
+      {label: 'Total', value: this.totalTotal},
+    ]
   }
 
 }

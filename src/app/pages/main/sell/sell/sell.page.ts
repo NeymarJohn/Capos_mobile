@@ -251,7 +251,6 @@ export class SellPage implements OnInit {
   }
 
   ionViewDidEnter() {
-    console.log("ionviewdidenter...");
     this.checkInitCart();
   }
 
@@ -313,7 +312,6 @@ export class SellPage implements OnInit {
   }
 
   initCart(action?: string) {
-    console.log("init cart...");
     this.cartService.initCart();
     if (action == 'return') {
       this.utilService.get('sale/sale', { sale_number: this.cart.origin_sale_number }).subscribe(result => {
@@ -531,7 +529,6 @@ export class SellPage implements OnInit {
         else return true;
         break;
       case 'return_items':
-        console.log("return_items: " + this.cart.sale_status);
         if (['parked', 'new'].includes(this.cart.sale_status) || this.cart.voided_payments.length > 0) return false;
         break;
       case 'void_item':
@@ -651,7 +648,6 @@ export class SellPage implements OnInit {
 
   doAction(action: string) {
     let status = this.checkButtonStatus(action);
-    console.log(action + " doaction:" + status);
     if (!status) return false;
     switch (action) {
       case 'view_sales':
@@ -838,7 +834,6 @@ export class SellPage implements OnInit {
   }
 
   fastDiscount(is_global: boolean) {
-    console.log("fast discount...");
     if (!this.selected_cart_product && !is_global) {
       this.toastService.show('You must to select one or more item');
       return;
@@ -927,7 +922,6 @@ export class SellPage implements OnInit {
   }
 
   discardSale() {
-    console.log('discard sale...');
     if (this.cart.products.length == 0 && !this.cart._id) {
       return;
     }
@@ -1085,7 +1079,6 @@ export class SellPage implements OnInit {
   }
 
   private _pay(pay_mode: string, pay_amount: number) {
-    console.log("[LOG] pay mode: " + pay_mode + ", pay_amount: " + pay_amount);
     this.cart.pay(pay_mode, pay_amount);
     this.cartService.processCustomerBalance(pay_mode, pay_amount);
     if (this.cart.able_to_complete) {
@@ -1112,7 +1105,6 @@ export class SellPage implements OnInit {
   }
 
   printSale() {
-    console.log("printsale...");
     const printMac = this.printers[0]?.id;
 
     const date = new Date(Date.now())
@@ -1289,7 +1281,6 @@ export class SellPage implements OnInit {
   }
 
   printLastSale() {
-    console.log("printlastsale...");
     const printMac = this.printers[0]?.id;
 
     const date = new Date(Date.now())
@@ -1499,7 +1490,6 @@ export class SellPage implements OnInit {
   }
 
   returnItems() {
-    console.log('return items...');
     this.cartService.loadCart(this.cart._id, 'return', () => {
       this.checkInitCart();
       // this.printSale();
@@ -1561,7 +1551,6 @@ export class SellPage implements OnInit {
   }
 
   voidSale() {
-    console.log("sell/voidsale...");
     let title = 'You are about to void this sale.';
     let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
     this.alertService.presentAlertConfirm(
@@ -1580,7 +1569,6 @@ export class SellPage implements OnInit {
   }
 
   loadLastSale(callback?: Function) {
-    console.log("loadlastsale...");
     const filter = {range: 'last_sale', user_id: this.user._id};
     this.utilService.get('sale/sale', filter).subscribe(result => {
       if(result && result.body.data.length==1) {
@@ -1653,7 +1641,6 @@ export class SellPage implements OnInit {
     popover.onDidDismiss().then(result => {
       if(typeof result.data != 'undefined') {
         let data = result.data;
-        console.log("openeditcash result...");
         this.openDrawerQuick();
       }
     });
@@ -1670,7 +1657,6 @@ export class SellPage implements OnInit {
   }
 
   taxExempt() {
-    console.log("tax exempt...");
     this.cart.is_ignoreTax = true;
     this.cart.save();
   }
