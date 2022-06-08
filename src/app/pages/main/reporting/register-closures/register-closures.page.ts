@@ -42,6 +42,7 @@ export class RegisterClosuresPage implements OnInit {
     sort_field: 'opening_time',
     sort_order: 'desc'
   };
+  summary:any[];
   rows:any[];
   all_columns:any[] = [
     {prop: 'register', name: 'Register', sortable: true, checked: true},
@@ -70,8 +71,12 @@ export class RegisterClosuresPage implements OnInit {
   ngOnInit() {
     this.authService.currentUser.subscribe(user => {
       this.user = user;
-      this.search();
+      // this.search();
     })
+  }
+
+  ionViewDidEnter() {
+    this.search();
   }
 
   search() {
@@ -84,14 +89,14 @@ export class RegisterClosuresPage implements OnInit {
       // this.utilService.get('sell/openclose', filter).subscribe(result => {
       axios.get(`${APP_CONSTANTS.API_URL}sell/openclose`, {params: filter}).then(res => {
         let result = res.data;
-        // if(result) {
-        //   for(let s of result) {
-        //     let openClose = new Openclose(this.authService, this.utilService);
-        //     openClose.loadDetails(s);
-        //     this.allData.push(openClose);
-        //   }
-        // }
-        //   this.getTableData();
+        if(result) {
+          for(let s of result) {
+            let openClose = new Openclose(this.authService, this.utilService);
+            openClose.loadDetails(s);
+            this.allData.push(openClose);
+          }
+        }
+          this.getTableData();
       });
     } else {
       this.getTableData();
@@ -130,6 +135,7 @@ export class RegisterClosuresPage implements OnInit {
     }
     this._onSort();
     this.getRowData();
+    this.loadSummary();
     this.loading = false;
   }
 
@@ -249,8 +255,21 @@ export class RegisterClosuresPage implements OnInit {
     return UtilFunc.getPriceWithCurrency(sum);
   }
 
-  public get summary():any[] {
+  public get _summary():any[] {
     return [
+      {label: 'Store Credit', value: this.totalStoreCredit},
+      {label: 'Cash(concealed total)', value: this.totalConcealedTotal},
+      {label: 'Cash', value: this.totalCash},
+      {label: 'Credit', value: this.totalCreditCard},
+      {label: 'Debit', value: this.totalDebitCard},
+      {label: 'Refunds', value: this.totalRefunds},
+      {label: 'Voided', value: this.totalVoided},
+      {label: 'Total', value: this.totalTotal},
+    ];
+  }
+
+  loadSummary() {
+    this.summary = [
       {label: 'Store Credit', value: this.totalStoreCredit},
       {label: 'Cash(concealed total)', value: this.totalConcealedTotal},
       {label: 'Cash', value: this.totalCash},

@@ -126,7 +126,6 @@ export class StoreManagementPage implements OnInit {
 
   getFastDiscount() {
     this.utilService.get('discount/fast_discount').subscribe(result => {
-      console.log(result);
       const data= result.body.data;
       if(data) {
         this.fast_discount = data.discount_percent;

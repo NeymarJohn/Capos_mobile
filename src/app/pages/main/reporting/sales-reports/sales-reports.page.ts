@@ -4,8 +4,6 @@ import * as UtilFunc from 'src/app/_helpers/util.helper';
 import { UtilService } from 'src/app/_services/util.service';
 import { PopoverController } from '@ionic/angular';
 import { SearchSalesReportComponent } from 'src/app/components/search-sales-report/search-sales-report.component';
-import axios from 'axios';
-import { APP_CONSTANTS } from 'src/app/_configs/constants';
 
 interface IData{
   date: string,
@@ -40,6 +38,7 @@ export class SalesReportsPage implements OnInit {
     sort_field: 'date',
     sort_order: 'desc'
   }
+  summary:any[];
   rows:any[];
   all_columns:any[] = [
     {prop: 'date', name: 'Date', sortable: true, checked: true},
@@ -77,20 +76,18 @@ export class SalesReportsPage implements OnInit {
     }
     this.loading = true;
     if(this.allData.length == 0) {
-      // this.utilService.get('sale/sale', this.filter).subscribe(result => {
-      axios.get(`${APP_CONSTANTS.API_URL}sale/sale`, {params: this.filter}).then(res => {
+      this.utilService.get('sale/sale', this.filter).subscribe(result => {
         this.rows = [];
-        let result = res.data;
-        // if(result) {
-        //   for(let s of result) {
-        //     s.date = this.util.handleDate(s.created_at);
-        //     let index = this.dates.findIndex(item=>item==s.date);
-        //     if(index==-1) this.dates.push(s.date);
-        //     this.allData.push(s);
-        //   }
-        //   this.getTableData();
-        // }
-      });
+        if(result && result.body) {
+          for(let s of result.body) {
+            s.date = this.util.handleDate(s.created_at);
+            let index = this.dates.findIndex(item=>item==s.date);
+            if(index==-1) this.dates.push(s.date);
+            this.allData.push(s);
+          }
+          this.getTableData();
+        }
+      })
     } else {
       this.getTableData();
     }
@@ -138,6 +135,7 @@ export class SalesReportsPage implements OnInit {
     }
     this._onSort();
     this.getRowData();
+    this.loadSummary();
     this.loading = false;
   }
 
@@ -238,8 +236,19 @@ export class SalesReportsPage implements OnInit {
     return this.util.getPriceWithCurrency(sum);
   }
 
-  public get summary():any[] {
+  public get _summary():any[] {
     return [
+      // {label: 'Total(Incl.Tax)', value: this.totalTotal},
+      // {label: 'Revenue', value: this.totalRevenue},
+      // {label: 'Cost of Goods', value: this.totalCost},
+      // {label: 'Gross Profit', value: this.totalProfit},
+      // {label: 'Margin(%)', value: this.totalMargin},
+      // {label: 'Tax', value: this.totalTax},
+    ];
+  }
+
+  loadSummary() {
+    this.summary = [
       {label: 'Total(Incl.Tax)', value: this.totalTotal},
       {label: 'Revenue', value: this.totalRevenue},
       {label: 'Cost of Goods', value: this.totalCost},

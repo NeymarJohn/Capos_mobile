@@ -202,8 +202,6 @@ export class SalesHistoryPage implements OnInit {
           })
         } else {
           this.cartService.loadCart(data.sale._id, data.action, result => {
-            console.log("loadcart result... ");
-            console.log(result);
             if(result) {
               this.nav.navigateForward(['main/sell/selling']);
             }

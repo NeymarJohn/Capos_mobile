@@ -14,9 +14,9 @@ export class LoadingPage implements OnInit {
   total:number = 0;
   loaded: number = 0;
   user: any;
-  
+
   constructor(
-    private utilService: UtilService,    
+    private utilService: UtilService,
     private authService: AuthService,
     private toastService: ToastService,
     private db: DbService,
@@ -41,41 +41,40 @@ export class LoadingPage implements OnInit {
         this.db.getDbLogs(this.user.private_web_address, rows => {
           const query = {user_id: this.user._id, loaded_date:''};
           if(rows.length > 0) query.loaded_date = rows.item(0).loaded_date;
-          this.utilService.get('util/get_all_data', query).subscribe(result => {            
-            console.log(result);
+          this.utilService.get('util/get_all_data', query).subscribe(result => {
             if(result && result.body) {
               const data = result.body;
               for(let mode in data) {
                 for(let tb in data[mode]) this.total += data[mode][tb].length;
-              }          
+              }
               for(let mode in data) {
-                for(let tb in data[mode]) {                  
-                  this.db.downloadData(mode, tb, data[mode][tb], loaded => {                
+                for(let tb in data[mode]) {
+                  this.db.downloadData(mode, tb, data[mode][tb], loaded => {
                     this.loaded += loaded;
                     if(this.loaded>=this.total) {
-                      this.finish();                  
+                      this.finish();
                     }
                   });
                 }
-              }            
-            } else {          
+              }
+            } else {
               this.gotoHome(rows);
             }
           }, error => {
             this.gotoHome(rows);
-          })      
+          })
         })
       }
-    })        
+    })
   }
 
   finish() {
     this.utilService.is_downloaded = true;
-    this.db.getCountries(countries => {                        
-      this.utilService.countries = countries; 
+    this.db.getCountries(countries => {
+      this.utilService.countries = countries;
     })
     this.db.getCurrencies(currencies => {
-      this.utilService.currencies = currencies; 
+      this.utilService.currencies = currencies;
     })
     this.db.updateDbLog(this.user.private_web_address);
     this.utilService.put('util/update_db_log', {user_id: this.user._id})
@@ -97,7 +96,7 @@ export class LoadingPage implements OnInit {
     return 0;
   }
 
-  public get progress_percent():string {    
+  public get progress_percent():string {
     return Math.round(this.progress_value * 100) + '%';
   }
 

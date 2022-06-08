@@ -26,7 +26,7 @@ export class DashboardPage implements OnInit {
   sales_mode:string = 'sales';
   interval:string = 'daily';
   date_from = '';
-  date_to = ''; 
+  date_to = '';
   util = UtilFunc;
   cur_date = {year: 0, month: 0, date:0};
   user:any;
@@ -39,7 +39,7 @@ export class DashboardPage implements OnInit {
   productsByOutlet: string    = '';
   registerClosures: number    = 0;
 
-  sales_data:Cart[] = []; 
+  sales_data:Cart[] = [];
   lineChartLabels:string[] = [];
   salesChartData:number[] = [];
   _salesChartData:number[] = [];
@@ -49,7 +49,7 @@ export class DashboardPage implements OnInit {
   salesBorderColor:string = '';
 
   product_mode:string = 'sales';
-  productChartData = [];  
+  productChartData = [];
   _productSalesChartData = [];
   _productOrdersChartData = [];
   selectedProducts:Product[] = [];
@@ -62,9 +62,9 @@ export class DashboardPage implements OnInit {
   ) {
     Chart.register(...registerables);
 
-    this.authService.currentUser.subscribe(user => {        
-      this.user = user;           
-    }); 
+    this.authService.currentUser.subscribe(user => {
+      this.user = user;
+    });
 
     let date = new Date();
     this.cur_date = {
@@ -72,11 +72,11 @@ export class DashboardPage implements OnInit {
     };
 
     this.date_from = [this.cur_date.year,('0' + this.cur_date.month).substr(-2), '01'].join('-');
-    this.date_to = [this.cur_date.year, ('0' + this.cur_date.month).substr(-2), ('0' + this.cur_date.date).substr(-2)].join('-');        
-    
+    this.date_to = [this.cur_date.year, ('0' + this.cur_date.month).substr(-2), ('0' + this.cur_date.date).substr(-2)].join('-');
+
   }
 
-  ngOnInit() {    
+  ngOnInit() {
     const start = [this.cur_date.year,('0' + this.cur_date.month).substr(-2), '01'].join('-');
     const end = [this.cur_date.year,('0' + this.cur_date.month).substr(-2), ('0' + this.cur_date.date).substr(-2)].join('-');
     let filter = {sale_status:'all_payments', start: start, end: end};
@@ -93,7 +93,7 @@ export class DashboardPage implements OnInit {
         let sales = sales_data.filter(item => this.getFormattedDate(item.created_at) == this.getFormattedDate(new Date()));
         sum = sales.reduce((a, b) => a + parseFloat(b.totalExcl), 0);
         this.totalByDay = this.util.getPriceWithCurrency(sum);
-      }      
+      }
     })
 
     this.utilService.get('product/product', {range: 'stock_level'}).subscribe(result => {
@@ -112,9 +112,9 @@ export class DashboardPage implements OnInit {
           sales_data.push(sale);
         }
         let sum = sales_data.reduce((a, b) => a + parseFloat(b.totalExcl), 0);
-        this.productsByUser = this.util.getPriceWithCurrency(sum);        
-        this.productsByOutlet = this.util.getPriceWithCurrency(sum);        
-      }      
+        this.productsByUser = this.util.getPriceWithCurrency(sum);
+        this.productsByOutlet = this.util.getPriceWithCurrency(sum);
+      }
     })
 
     this.utilService.get('sale/sale', {sale_status:'all_payments', customer:'to_customer' }).subscribe(result => {
@@ -126,23 +126,23 @@ export class DashboardPage implements OnInit {
           sales_data.push(sale);
         }
         let sum = sales_data.reduce((a, b) => a + parseFloat(b.totalExcl), 0);
-        this.productsByCustomer = this.util.getPriceWithCurrency(sum);        
-      }      
+        this.productsByCustomer = this.util.getPriceWithCurrency(sum);
+      }
     })
 
     this.utilService.get('sell/openclose', {status:2}).subscribe(result => {
       if(result && result.body) {
         this.registerClosures = result.body.length;
-      }      
+      }
     })
-  }  
+  }
 
   ionViewDidEnter() {
     this.initSalesChart();
     this.initProductChart();
     this.loadData();
     if(this.utilService.reload_sel_products) {
-      this.loadSelProducts();      
+      this.loadSelProducts();
       this.utilService.reload_sel_products = false;
     }
   }
@@ -152,10 +152,10 @@ export class DashboardPage implements OnInit {
     let ctx = this.salesCanvas.nativeElement;
     ctx.height = 250;
     this.salesChart = new Chart(this.salesCanvas.nativeElement, {
-      type: 'line',      
+      type: 'line',
       data: this.salesChartConfigData
     });
-  }  
+  }
 
   get salesChartConfigData():any {
     return {
@@ -163,7 +163,7 @@ export class DashboardPage implements OnInit {
       datasets: [
         {
           label: this.salesChartLabel,
-          fill: false,            
+          fill: false,
           backgroundColor: this.salesBackColor,
           borderColor: this.salesBorderColor,
           borderCapStyle: "butt",
@@ -191,7 +191,7 @@ export class DashboardPage implements OnInit {
     let ctx = this.productCanvas.nativeElement;
     ctx.height = 250;
     this.productChart = new Chart(this.productCanvas.nativeElement, {
-      type: 'line',      
+      type: 'line',
       data: this.productChartConfigData
     });
   }
@@ -206,7 +206,7 @@ export class DashboardPage implements OnInit {
   getDefaultDataset():any {
     return {
       label: '',
-      fill: false,            
+      fill: false,
       backgroundColor: '#000',
       borderColor: '#000',
       borderCapStyle: "butt",
@@ -239,10 +239,10 @@ export class DashboardPage implements OnInit {
   }
 
   async loadData() {
-    await this.loading.create();    
+    await this.loading.create();
     const filter = {sale_status:'all_payments', start: this.date_from, end: this.date_to};
-    this.sales_data = [];    
-    this.utilService.get('sale/sale', filter).subscribe(result => {      
+    this.sales_data = [];
+    this.utilService.get('sale/sale', filter).subscribe(result => {
       if(result && result.body) {
         for(let s of result.body) {
           let sale = new Cart(this.authService, this.utilService);
@@ -251,16 +251,16 @@ export class DashboardPage implements OnInit {
         }
       }
       this.loadDataSets();
-    })    
+    })
   }
 
   async loadDataSets() {
     let start = new Date(this.date_from), end = new Date();
     if(this.date_to) {
       end = new Date(this.date_to);
-    }    
+    }
     const all_dates = this.getAllRangeDates(start, end);
-    this.lineChartLabels = [];    
+    this.lineChartLabels = [];
     this.salesChartData = [];
     this._salesChartData = [];
     this._ordersChartData = [];
@@ -269,18 +269,18 @@ export class DashboardPage implements OnInit {
       let label = this.getFormattedDate(d, this.interval);
       let index = this.lineChartLabels.findIndex(item => item == label);
       if(index == -1) {
-        this.lineChartLabels.push(label);        
+        this.lineChartLabels.push(label);
       }
-    }    
+    }
     for(let d of this.lineChartLabels) {
         let sales = this.sales_data.filter(item => this.getFormattedDate(item.created_at, this.interval) == d);
-        let sum = sales.reduce((a, b) => a + parseFloat(b.totalExcl), 0);                
+        let sum = sales.reduce((a, b) => a + parseFloat(b.totalExcl), 0);
         this._salesChartData.push(sum);
-        this._ordersChartData.push(sales.length);        
+        this._ordersChartData.push(sales.length);
     }
     this.setSalesChartData();
-    
-    this.productChartData = [];    
+
+    this.productChartData = [];
     this._productSalesChartData = [];
     this._productOrdersChartData = [];
 
@@ -296,22 +296,22 @@ export class DashboardPage implements OnInit {
   }
 
   async loadSelProducts() {
-    this.productChartData = [];    
+    this.productChartData = [];
     this._productSalesChartData = [];
     this._productOrdersChartData = [];
     this.selectedProducts = [];
-    if(!this.loading.loadingElement) await this.loading.create();    
-    this.utilService.get('product/sel_product', {user_id: this.user._id}).subscribe(async result => {      
-      if(result && result.body) {        
+    if(!this.loading.loadingElement) await this.loading.create();
+    this.utilService.get('product/sel_product', {user_id: this.user._id}).subscribe(async result => {
+      if(result && result.body) {
         for(let p of result.body.products) {
           let product = new Product(this.authService, this.utilService);
           product.loadDetails(p);
           this.selectedProducts.push(product);
           this.loadProductData(product);
         }
-      }  
+      }
       this.setProductsChartData();
-      await this.loading.dismiss();    
+      await this.loading.dismiss();
     })
   }
 
@@ -331,43 +331,43 @@ export class DashboardPage implements OnInit {
         let products = s.products.filter(item => item.product_id == product._id);
         sum += products.reduce((a, b)=> a + b.discountedTotal, 0);
         solds += products.reduce((a, b)=> a + b.qty, 0);
-      }      
+      }
       chartData1.push(sum);
-      chartData2.push(solds);      
+      chartData2.push(solds);
     }
     data1.data = chartData1;
     data2.data = chartData2;
     this._productSalesChartData.push(data1);
-    this._productOrdersChartData.push(data2);    
+    this._productOrdersChartData.push(data2);
   }
 
-  setSalesChartData() {    
+  setSalesChartData() {
     if(this.sales_mode == 'sales') {
       this.salesChartData = [...this._salesChartData];
       this.salesChartLabel = 'Sales';
       this.salesBackColor = 'rgba(30,136,229,0.4)';
-      this.salesBorderColor = 'rgba(30,136,229,1)';      
+      this.salesBorderColor = 'rgba(30,136,229,1)';
     } else {
       this.salesChartData = [...this._ordersChartData];
       this.salesChartLabel = 'Orders';
       this.salesBackColor = 'rgba(75,192,192,0.4)';
       this.salesBorderColor = 'rgba(75,192,192,1)';
-    }     
+    }
     if(this.salesChart) {
-      this.salesChart.data = this.salesChartConfigData;      
-      this.salesChart.update();   
+      this.salesChart.data = this.salesChartConfigData;
+      this.salesChart.update();
     }
   }
 
   setProductsChartData() {
     if(this.product_mode == 'sales') {
-      this.productChartData = [...this._productSalesChartData];            
+      this.productChartData = [...this._productSalesChartData];
     } else {
-      this.productChartData = [...this._productOrdersChartData];            
+      this.productChartData = [...this._productOrdersChartData];
     }
     if(this.productChart) {
-      this.productChart.data = this.productChartConfigData;      
-      this.productChart.update();   
+      this.productChart.data = this.productChartConfigData;
+      this.productChart.update();
     }
   }
 
@@ -384,7 +384,7 @@ export class DashboardPage implements OnInit {
       if(typeof s == 'number') {
         sum += s;
       }
-    }    
+    }
     return this.util.getPriceWithCurrency(sum);
   }
 
@@ -425,13 +425,13 @@ export class DashboardPage implements OnInit {
     const popover = await this.popoverController.create({
       component: ChartSettingsComponent,
       // event: ev,
-      cssClass: 'popover_custom fixed-width',      
+      cssClass: 'popover_custom fixed-width',
       translucent: true,
       componentProps: {interval: this.interval, date_from: this.date_from, date_to: this.date_to}
     });
 
-    popover.onDidDismiss().then(result => {      
-      if(typeof result.data != 'undefined') {        
+    popover.onDidDismiss().then(result => {
+      if(typeof result.data != 'undefined') {
         let data = result.data;
         let df = this.util.handleDate(data.date_from);
         let dt = this.util.handleDate(data.date_to);
@@ -444,11 +444,11 @@ export class DashboardPage implements OnInit {
       }
     });
 
-    await popover.present();    
+    await popover.present();
   }
 
   getFormattedDate(current_date:any, period:string='daily'):string {
-    let d = new Date(current_date);    
+    let d = new Date(current_date);
     let year = d.getFullYear(), month = ('0' + (d.getMonth() + 1)).substr(-2), date = ('0' + d.getDate()).substr(-2);
     if(period == 'daily') {
       return [year, month, date].join('-');

@@ -16,7 +16,7 @@ import { ThisReceiver } from '@angular/compiler';
   styleUrls: ['./manage-orders.page.scss'],
 })
 export class ManageOrdersPage implements OnInit {
-  title: string = 'Manage Orders';   
+  title: string = 'Manage Orders';
   allData:Order[] = [];
   tableData = [];
   loading: boolean = false;
@@ -32,8 +32,9 @@ export class ManageOrdersPage implements OnInit {
     due_to: '',
     sort_field: 'created_at',
     sort_order: 'desc'
-  };  
-  rows:any[];  
+  };
+  summary:any[];
+  rows:any[];
   all_columns:any[] = [
     {prop: 'type', name: 'Type', sortable: true, checked: true},
     {prop: 'number', name: 'Number', sortable: true, checked: true},
@@ -72,7 +73,7 @@ export class ManageOrdersPage implements OnInit {
       if(result && result.body) {
         for(let r of result.body) {
           const order = new Order(this.authService, this.utilService);
-          order.loadDetails(r);      
+          order.loadDetails(r);
           this.allData.push(order);
         }
       }
@@ -82,20 +83,20 @@ export class ManageOrdersPage implements OnInit {
 
   search() {
     this.loading = true;
-    if(this.allData.length == 0) {      
-      this.initTable()      
+    if(this.allData.length == 0) {
+      this.initTable()
     } else {
       this.getTableData();
-    }    
+    }
   }
-  
+
   getTableData() {
     this.tableData = [];
     for(let a of this.allData) {
       let c = true;
       if(this.filter.keyword) {
         let keyword = this.filter.keyword;
-        c = c && (a.data.invoice_number && a.data.invoice_number.toLowerCase().indexOf(keyword.toLowerCase().trim())>-1 || 
+        c = c && (a.data.invoice_number && a.data.invoice_number.toLowerCase().indexOf(keyword.toLowerCase().trim())>-1 ||
               a.data.order_number && a.data.order_number.toLowerCase().indexOf(keyword.toLowerCase().trim())>-1);
       }
       if(this.filter.type) {
@@ -119,7 +120,7 @@ export class ManageOrdersPage implements OnInit {
       if(this.filter.due_to) {
         c = c && UtilFunc.compareDate(a.data.delivery_date, this.filter.due_to) <= 0;
       }
-      if(!c) continue;      
+      if(!c) continue;
       let from = a.data.type=='return' ? a.data.deliver_to.name : a.data.supplier.name;
       let to = a.data.type!=='return' ? a.data.deliver_to.name : a.data.supplier.name;
       this.tableData.push({
@@ -141,6 +142,7 @@ export class ManageOrdersPage implements OnInit {
     }
     this._onSort();
     this.getRowData();
+    this.loadSummary();
     this.loading = false;
   }
 
@@ -157,7 +159,7 @@ export class ManageOrdersPage implements OnInit {
         items: t.items,
         cost: t.cost_str,
         created_at: t.created_at,
-        order: t.order        
+        order: t.order
       })
     }
   }
@@ -165,20 +167,20 @@ export class ManageOrdersPage implements OnInit {
   _onSort() {
     let prop = this.filter.sort_field;
     let dir = this.filter.sort_order;
-    const tableData = [...this.tableData];      
+    const tableData = [...this.tableData];
     tableData.sort((a, b)=> {
       if(['items', 'cost'].includes(prop)) {
         return (a[prop] - b[prop]) * (dir === 'desc' ? -1 : 1);
       }else if(prop == 'created_at') {
-        return UtilFunc.compareDate(a.date, b.date) * (dir === 'desc' ? -1 : 1);        
+        return UtilFunc.compareDate(a.date, b.date) * (dir === 'desc' ? -1 : 1);
       } else {
         return a[prop].localeCompare(b[prop]) * (dir === 'desc' ? -1 : 1);
-      }        
+      }
     })
     this.tableData = tableData;
   }
 
-  onSort(sort:any) {    
+  onSort(sort:any) {
     this.loading = true;
     this.filter.sort_field = sort.prop;
     this.filter.sort_order = sort.dir;
@@ -189,19 +191,19 @@ export class ManageOrdersPage implements OnInit {
     }, 200);
   }
 
-  addNew() {    
+  addNew() {
     this.orderService.init();
-    this.nav.navigateForward(['edit-order-stock']);    
+    this.nav.navigateForward(['edit-order-stock']);
   }
 
   edit(row:any) {
-    let order:Order = row.order;    
+    let order:Order = row.order;
     this.orderService.init();
     this.orderService.order = order;
-    if(order.data.status == 'open') {      
-      this.nav.navigateForward(['edit-order-stock']);    
+    if(order.data.status == 'open') {
+      this.nav.navigateForward(['edit-order-stock']);
     } else {
-      this.nav.navigateForward(['order-detail']);    
+      this.nav.navigateForward(['order-detail']);
     }
   }
 
@@ -220,13 +222,13 @@ export class ManageOrdersPage implements OnInit {
     const popover = await this.popoverController.create({
       component: SearchOrderStockComponent,
       // event: ev,
-      cssClass: 'popover_custom',      
+      cssClass: 'popover_custom',
       translucent: true,
       componentProps: {filter: this.filter}
     });
 
-    popover.onDidDismiss().then(result => {      
-      if(typeof result.data != 'undefined') {        
+    popover.onDidDismiss().then(result => {
+      if(typeof result.data != 'undefined') {
         let data = result.data;
         if(data.process && data.filter) {
           for(let key in data.filter) {
@@ -237,7 +239,7 @@ export class ManageOrdersPage implements OnInit {
       }
     });
 
-    await popover.present(); 
+    await popover.present();
   }
 
   goto(url:string) {
@@ -253,8 +255,15 @@ export class ManageOrdersPage implements OnInit {
     return UtilFunc.getPriceWithCurrency(sum);
   }
 
-  public get summary():any[] {
+  public get _summary():any[] {
     return [
+      {label: 'Total Items', value: this.totalItems},
+      {label: 'Total Cost', value: this.totalCost}
+    ]
+  }
+
+  loadSummary() {
+    this.summary = [
       {label: 'Total Items', value: this.totalItems},
       {label: 'Total Cost', value: this.totalCost}
     ]

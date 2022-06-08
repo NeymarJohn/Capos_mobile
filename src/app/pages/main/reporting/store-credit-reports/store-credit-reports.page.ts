@@ -34,6 +34,7 @@ export class StoreCreditReportsPage implements OnInit {
     sort_field: 'customer',
     sort_order: 'asc'
   };
+  summary:any[];
   rows:any[];
   all_columns:any[] = [
     {prop: 'customer', name: 'Customer', sortable: true, checked: true},
@@ -57,14 +58,14 @@ export class StoreCreditReportsPage implements OnInit {
     if(this.allData.length == 0) {
       this.loading = true;
       this.utilService.get('customers/customer',{}).subscribe(result => {
-        // if(result && result.body) {
-        //   for(let c of result.body) {
-        //     let customer = new Customer(this.authService, this.utilService);
-        //     customer.loadDetails(c);
-        //     this.allData.push(customer);
-        //   }
-        // }
-        // this.getTableData();
+        if(result && result.body) {
+          for(let c of result.body) {
+            let customer = new Customer(this.authService, this.utilService);
+            customer.loadDetails(c);
+            this.allData.push(customer);
+          }
+        }
+        this.getTableData();
       })
     } else {
       this.getTableData();
@@ -92,6 +93,7 @@ export class StoreCreditReportsPage implements OnInit {
     }
     this._onSort();
     this.getRowData();
+    this.loadsummary();
     this.loading = false;
   }
 
@@ -171,12 +173,20 @@ export class StoreCreditReportsPage implements OnInit {
     return UtilFunc.getPriceWithCurrency(sum);
   }
 
-  public get summary():any[] {
+  public get _summary():any[] {
     return [
       {label: 'Total Issued', value: this.totalIssued},
       {label: 'Total Redeemed', value: this.totalRedeemed},
       {label: 'Balance', value: this.totalCredit}
     ];
+  }
+
+  loadsummary() {
+    this.summary = [
+      {label: 'Total Issued', value: this.totalIssued},
+      {label: 'Total Redeemed', value: this.totalRedeemed},
+      {label: 'Balance', value: this.totalCredit}
+    ]
   }
 
 }
