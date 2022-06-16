@@ -80,6 +80,12 @@ export class CartService {
     });
   }
 
+  getOpenClose() {
+    this.openClose.loadCurrent(()=>{}, ()=>{
+      // this.nav.navigateForward(['main/sell/open-register']);
+    });
+  }
+
   openRegister(data:any, callback?:Function) {
     this.openClose.open_value = data.open_value;
     this.openClose.open_note = data.open_note;

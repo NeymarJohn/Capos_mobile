@@ -217,7 +217,7 @@ export class SellPage implements OnInit {
   invoicePrintingStatus: Boolean = false;
   printProductBarcodeStatus: Boolean = false;
   printBillStatus: Boolean = false;
-
+  emailReceiptStatus: Boolean =false;
 
   // fast discount
   fast_discount: String = "0";
@@ -1142,7 +1142,6 @@ export class SellPage implements OnInit {
 
   printSale() {
     const printMac = this.printers[0]?.id;
-
     const date = new Date(Date.now())
     const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
     let receipt = "";
@@ -1550,9 +1549,191 @@ export class SellPage implements OnInit {
 
   }
 
+  emailToCustomer(email): void{
+    const discount_symbol = { percent: '%', amount: '$' };
+    const data = {};
+    
+    let template: any = "";
+    template += `<div style="display: block; width: 100%; padding-left: 40%;
+                          font-family: Lato;
+                          font-size: 24px;
+                          font-style: normal;
+                          font-weight: 700;
+                          line-height: 29px;">
+                        <div><b style="margin-bottom: 16px">${this.cartService.cart.store_info.store_name}</b></div>
+                        <div style="font-weight: 400;">Outlet: ${this.cartService.cart.store_info.physical_address.country.country_name} ${this.cartService.cart.store_info.physical_address.city} ${this.cartService.cart.store_info.physical_address.street}</div>
+                    </div>`;
+
+        this.cartService.cart.products.forEach(product => {
+            template +=
+                `<div  style="display: flex;
+                      margin-bottom: 10px;
+                      font-family: Lato;
+                      font-size: 24px;
+                      font-style: normal;
+                      font-weight: 400;
+                      line-height: 29px;
+                      letter-spacing: 0em;
+                      text-align: left;" >
+                      <div style="display: flex; width: 50%">
+                            <div>${product.qty}</div>
+                            <div style="margin-left: 24px;">`;
+            if (product.product_name) {
+                template += `<div>${product.product_name}</div>
+                             <div>
+                               <small>${product.variant_name}</small>
+                             </div>`;
+            } else {
+                template += `<div>${product.product_name}</div>`;
+            }
+            if (product.discount.value) {
+                template += `<div ><small>Disc: ${product.discount.value}</small></div>`;
+            }
+            if (product.note) {
+                template += `<div>
+                                    <small>Note: ${product.note}</small>
+                                 </div>`;
+            }
+            template += `</div>
+                     </div>`;
+            const totalPerItem = (product.qty * product.price * (1 - product.discount.value / 100)).toFixed();
+            template +=
+                `<div style="width: 50%">
+                            <div>$ ${totalPerItem}</div>`;
+            if (product.discount.value > 0) {
+                template += `<div style="text-decoration: line-through">
+                                <small>$ ${product.qty * product.price}</small>
+                            </div>`;
+            }
+            template +=
+                `</div>
+                </div>`;
+        });
+
+        template +=
+            `<div  style="
+                      border-top: 1px solid;
+                      margin-top: 16px;
+                      padding-bottom: 16px;
+                      padding-left: 48px;
+                      border-bottom: 1px solid;
+                      padding-top: 24px;
+                      font-family: Lato;
+                      font-size: 24px;
+                      font-style: normal;
+                      font-weight: 400;
+                      line-height: 29px;
+                      letter-spacing: 0em;
+                      text-align: left;
+                      ">
+                      <div style="display: flex">
+                            <div style="width: 50%">Sub Total</div>
+                            <div style="width: 50%">${this.cartService.cart.subTotal_str}</div>
+                      </div>`;
+        if (this.cartService.cart.discount.value > 0) {
+            template += `<div style="display: flex">
+                                <div style="width: 50%">Additional Discount</div>
+                                <div style="width: 50%">
+                                  ${this.cartService.cart.discount.value} ${discount_symbol[this.cartService.cart.discount.mode]}
+                                </div>
+                        </div>`;
+        }
+        if (this.cartService.cart.tax) {
+            template += `<div style="display: flex; justify-content: space-between">
+                            <div style="width: 50%">Tax</div>
+                            <div style="width: 50%">$ ${this.cartService.cart.tax}</div>
+                          </div>`;
+
+        }
+        template +=
+            `</div>`;
+
+        template +=
+            `<div style="
+                          padding-top: 16px;
+                          display: flex;
+                          font-family: Lato;
+                          font-size: 24px;
+                          font-style: normal;
+                          font-weight: 400;
+                          line-height: 29px;
+                          letter-spacing: 0em;
+                          text-align: left;
+                          margin-bottom: 16px;
+                          padding-bottom: 16px;
+                          border-bottom: 1px solid;
+                        ">
+                          <div style="width: 50%;font-weight: bold">
+                            Sale Total <small>${this.cartService.cart.total_items} items</small>
+                          </div>
+                          <div style="width: 50%;">${this.cartService.cart.totalIncl_str}</div>
+                </div>`;
+
+        this.cartService.cart.payments.forEach(payment => {
+            const date = payment.created_at.toString().split('T')[0];
+            template +=
+                `<div style="padding-left: 48px">
+                      <div style="display: flex;
+                           font-family: Lato;
+                           font-size: 24px;
+                           font-style: normal;
+                           font-weight: 400;
+                           line-height: 29px;
+                           letter-spacing: 0em;
+                           text-align: left;
+                           margin-bottom: 16px;
+                           padding-bottom: 16px;
+                           border-bottom: 1px solid;" >
+                            <div style="width: 50%;">
+                                  <div>
+                                    ${payment.type}
+                                  </div>
+                                  <div>
+                                    <small>` + date + `</small>
+                                  </div>
+                            </div>
+                            <div style="width: 50%;">${payment.amount}</div>
+                      </div>      
+                </div>`;
+        });
+        template +=
+            `<div style="display: flex;
+                           margin-bottom: 16px;
+                           padding-bottom: 16px; ">
+                        <div style="
+                              font-weight: bold;
+                              font-family: Lato;
+                              font-size: 24px;
+                              font-style: normal;
+                              line-height: 29px;
+                              letter-spacing: 0em;
+                              text-align: left;
+                              margin-bottom: 16px;
+                              padding-bottom: 16px;
+                             width: 50%;">Change</div>
+                        <div style="width: 50%">${this.cartService.cart.change}</div>
+               </div>`;
+    console.log("test:", template);
+
+    Object.assign(data, {email, template: template, invoice_number: this.cartService.cart.sale_number});
+
+    this.utilService.post('sell/email', data).subscribe(result => {
+      console.log(result);
+      //  this.cart.save(() => {
+      //   this._completeSale();
+      // });
+    });
+  }
+
   completeSale() {
     this.cartService.completeSale(async () => {
       this.toastService.show(Constants.message.successComplete);
+      
+      console.log(this.cart.customer);
+      if(this.cart.customer && this.emailReceiptStatus) {
+        this.emailToCustomer(this.cart.customer.data.email);
+      }
+
       if(this.receiptPrintedStatus) {
         if(this.invoicePrintingStatus) {
           this.invoicePrintConfirm();
@@ -1560,7 +1741,8 @@ export class SellPage implements OnInit {
         } else {
           this.printSale();
         }
-      }
+      }      
+
       this.loadLastSale();
       if (this.cart.payment_status == 'cash') {
         const popover = await this.popoverController.create({
@@ -1654,6 +1836,7 @@ export class SellPage implements OnInit {
       this.invoicePrintingStatus = this.store_policy.prints_settings.invoice_printing;
       this.printProductBarcodeStatus = this.store_policy.prints_settings.print_product;
       this.printBillStatus = this.store_policy.prints_settings.print_bill;
+      this.emailReceiptStatus = this.store_policy.prints_settings.email_receipt;
     });
   }
 
