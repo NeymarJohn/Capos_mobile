@@ -171,6 +171,22 @@
 		</ion-card>
 		<ion-card>
 			<ion-card-header>
+				<ion-card-title>Sale Summary Report</ion-card-title>				
+			</ion-card-header>
+			<ion-card-content>
+				<app-table 
+				    [tb_name]="'product_type'" 
+				    [rows]="reportDatabyCategories" 
+				    [all_columns]="all_columns" 
+				    [show_columns]="show_columns"
+				    [show_details]="false"
+				    [loading]="tableloading"  
+				    (reloadEvent)="initTable()"
+				  ></app-table>
+			</ion-card-content>
+		</ion-card>
+		<ion-card>
+			<ion-card-header>
 				<ion-card-title>Closing Summary</ion-card-title>
 			</ion-card-header>
 			<ion-card-content>

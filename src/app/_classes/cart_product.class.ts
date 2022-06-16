@@ -79,6 +79,20 @@ export class CartProduct{
 		return '';
 	}
 
+  public get product_description():string {
+    if(this.product) {
+      return this.product.data.description;
+    }
+    return '';
+  }
+
+  public get product_barcode():string {
+    if(this.product) {
+      return this.product.data.barcode;
+    }
+    return '';
+  }
+
 	public get variant_product():any {
 		if(this.product && this.variant_id) {
 			let index = this.product.data.variant_products.findIndex(item => item._id == this.variant_id);
