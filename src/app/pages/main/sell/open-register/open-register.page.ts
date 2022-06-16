@@ -1,6 +1,6 @@
 import { Component, OnInit }                  from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { NavController, PopoverController } from '@ionic/angular';
+import { NavController, PopoverController, Platform } from '@ionic/angular';
 
 import * as UtilFunc      from 'src/app/_helpers/util.helper';
 import { Openclose }        from 'src/app/_classes/openclose.class';
@@ -14,9 +14,8 @@ import { AlertService } from 'src/app/_services/alert.service';
 import { CartService } from 'src/app/_services/cart.service';
 import { PrintService }   from 'src/app/services/print.service';
 import { CashDetailComponent } from 'src/app/components/cash-detail/cash-detail.component';
-
-// import { Platform } from '@ionic/angular';
-// import { BackgroundMode } from '@ionic-native/background-mode';
+// import { BackgroundModeOriginal } from '@ionic-native/background-mode';
+import { BackgroundMode } from '@awesome-cordova-plugins/background-mode/ngx';
 
 
 @Component({
@@ -65,9 +64,8 @@ export class OpenRegisterPage implements OnInit {
     // public lastClose: Openclose,
     private print: PrintService,
     public store_policy:StorePolicy,
-
-    // private backgroundMode: BackgroundMode,
-    // private plt: Platform
+    private backgroundMode: BackgroundMode,
+    private plt: Platform,
   ) {
     this.authService.checkPremission('close_register');
     this.form = this.fb.group({
@@ -75,7 +73,7 @@ export class OpenRegisterPage implements OnInit {
       open_note: ['']
     });
     this.addPrinterList();
-    // this.initBackgroundMode();
+    
   }
 
   ngOnInit() {
@@ -87,33 +85,33 @@ export class OpenRegisterPage implements OnInit {
       this.cartService.getLastClose();
     }
     this.initTable();
+    this.initBackgroundMode();
   }
 
   ionViewDidEnter() {
     this.getReportbyCategories();
   }
 
-  // private initBackgroundMode() {
-  //   this.plt.ready().then(()=>{
-  //     this.backgroundMode.setDefaults({silent: true});
-  //     this.backgroundMode.enable();
-  //     if(this.plt.is("android")) {
-  //       this.backgroundMode.on('activate').subscribe(()=>{
-  //         setTimeout(this.checkCurrentTime, 1000);
-  //       })
-  //     }
-  //   })
-  // }
-
-  // checkCurrentTime() {
-  //   let date = new Date();
-  //   let hour = date.getHours();
-  //   console.log("hour: " + hour);
-  //   // if(hour == "04") {
-  //   //   ////action
-  //   //   console.log(hour);
-  //   // } 
-  // }
+  private initBackgroundMode() {
+    this.plt.ready().then(()=>{
+      console.log("step 1");
+      this.backgroundMode.enable();
+      console.log("step 2");
+      const title = "Background mode testing";
+      const msg = "This is background mode";
+      setInterval(() => {
+        this.alertService.presentAlertConfirm(title, msg, () => {
+          this.toastService.show("Hello");
+        });
+      }, 5000);
+      this.backgroundMode.on('activate').subscribe((s)=>{
+        console.log('backgroundMode activate');
+        if(this.plt.is("android")) {
+          
+        }
+      });
+    });
+  }
 
   public get mode():string {
     if(this.cartService.openClose._id) {
