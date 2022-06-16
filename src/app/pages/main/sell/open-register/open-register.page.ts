@@ -15,8 +15,8 @@ import { CartService } from 'src/app/_services/cart.service';
 import { PrintService }   from 'src/app/services/print.service';
 import { CashDetailComponent } from 'src/app/components/cash-detail/cash-detail.component';
 
-import { Platform } from '@ionic/angular';
-import { BackgroundMode } from '@ionic-native/background-mode';
+// import { Platform } from '@ionic/angular';
+// import { BackgroundMode } from '@ionic-native/background-mode';
 
 
 @Component({
@@ -66,8 +66,8 @@ export class OpenRegisterPage implements OnInit {
     private print: PrintService,
     public store_policy:StorePolicy,
 
-    private backgroundMode: BackgroundMode,
-    private plt: Platform
+    // private backgroundMode: BackgroundMode,
+    // private plt: Platform
   ) {
     this.authService.checkPremission('close_register');
     this.form = this.fb.group({
@@ -75,7 +75,7 @@ export class OpenRegisterPage implements OnInit {
       open_note: ['']
     });
     this.addPrinterList();
-    this.initBackgroundMode();
+    // this.initBackgroundMode();
   }
 
   ngOnInit() {
@@ -93,27 +93,27 @@ export class OpenRegisterPage implements OnInit {
     this.getReportbyCategories();
   }
 
-  private initBackgroundMode() {
-    this.plt.ready().then(()=>{
-      this.backgroundMode.setDefaults({silent: true});
-      this.backgroundMode.enable();
-      if(this.plt.is("android")) {
-        this.backgroundMode.on('activate').subscribe(()=>{
-          setTimeout(this.checkCurrentTime, 1000);
-        })
-      }
-    })
-  }
+  // private initBackgroundMode() {
+  //   this.plt.ready().then(()=>{
+  //     this.backgroundMode.setDefaults({silent: true});
+  //     this.backgroundMode.enable();
+  //     if(this.plt.is("android")) {
+  //       this.backgroundMode.on('activate').subscribe(()=>{
+  //         setTimeout(this.checkCurrentTime, 1000);
+  //       })
+  //     }
+  //   })
+  // }
 
-  checkCurrentTime() {
-    let date = new Date();
-    let hour = date.getHours();
-    console.log("hour: " + hour);
-    // if(hour == "04") {
-    //   ////action
-    //   console.log(hour);
-    // } 
-  }
+  // checkCurrentTime() {
+  //   let date = new Date();
+  //   let hour = date.getHours();
+  //   console.log("hour: " + hour);
+  //   // if(hour == "04") {
+  //   //   ////action
+  //   //   console.log(hour);
+  //   // } 
+  // }
 
   public get mode():string {
     if(this.cartService.openClose._id) {
