@@ -1,34 +1,42 @@
-import { Component, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActionSheetController, NavController, Platform, PopoverController } from '@ionic/angular';
-import { AutoCompleteOptions, AutoCompleteComponent } from 'ionic4-auto-complete';
-import { ChooseCustomerComponent } from 'src/app/components/choose-customer/choose-customer.component';
-import { ConfirmPasswordComponent } from 'src/app/components/confirm-password/confirm-password.component';
-import { DiscountComponent } from 'src/app/components/discount/discount.component';
-import { PayAmountComponent } from 'src/app/components/pay-amount/pay-amount.component';
-import { PayChangeComponent } from 'src/app/components/pay-change/pay-change.component';
-import { QuantityComponent } from 'src/app/components/quantity/quantity.component';
-import { SaleNoteComponent } from 'src/app/components/sale-note/sale-note.component';
-import { DrawerNoteComponent } from 'src/app/components/drawer-note/drawer-note.component';
-import { UnfulfilledSaleComponent } from 'src/app/components/unfulfilled-sale/unfulfilled-sale.component';
-import { Cart } from 'src/app/_classes/cart.class';
-import { CartProduct } from 'src/app/_classes/cart_product.class';
-import { Openclose } from 'src/app/_classes/openclose.class';
-import { Payment } from 'src/app/_classes/payment.class';
-import { Product } from 'src/app/_classes/product.class';
-import { Constants } from 'src/app/_configs/constants';
-import { AlertService } from 'src/app/_services/alert.service';
-import { AuthService } from 'src/app/_services/auth.service';
-import { CartService } from 'src/app/_services/cart.service';
-import { LoadingService } from 'src/app/_services/loading.service';
+import { Component, OnInit, ViewEncapsulation, ViewChild }    from '@angular/core';
+import { FormBuilder, FormGroup, Validators }                 from '@angular/forms';
+
+import { ActionSheetController, NavController, Platform, PopoverController }    from '@ionic/angular';
+import { AutoCompleteOptions, AutoCompleteComponent }                           from 'ionic4-auto-complete';
+import { BarcodeScanner } from "@ionic-native/barcode-scanner/ngx";
+
+import { ChooseCustomerComponent }      from 'src/app/components/choose-customer/choose-customer.component';
+import { ConfirmPasswordComponent }     from 'src/app/components/confirm-password/confirm-password.component';
+import { DiscountComponent }            from 'src/app/components/discount/discount.component';
+import { PayAmountComponent }           from 'src/app/components/pay-amount/pay-amount.component';
+import { PayChangeComponent }           from 'src/app/components/pay-change/pay-change.component';
+import { QuantityComponent }            from 'src/app/components/quantity/quantity.component';
+import { SaleNoteComponent }            from 'src/app/components/sale-note/sale-note.component';
+import { DrawerNoteComponent }          from 'src/app/components/drawer-note/drawer-note.component';
+import { UnfulfilledSaleComponent }     from 'src/app/components/unfulfilled-sale/unfulfilled-sale.component';
+
+import { Cart }             from 'src/app/_classes/cart.class';
+import { CartProduct }      from 'src/app/_classes/cart_product.class';
+import { Openclose }        from 'src/app/_classes/openclose.class';
+import { Payment }          from 'src/app/_classes/payment.class';
+import { Product }          from 'src/app/_classes/product.class';
+import { StorePolicy }      from 'src/app/_classes/store_policy.class';
+
+import { AlertService }         from 'src/app/_services/alert.service';
+import { AuthService }          from 'src/app/_services/auth.service';
+import { CartService }          from 'src/app/_services/cart.service';
+import { LoadingService }       from 'src/app/_services/loading.service';
 import { SearchProductService } from 'src/app/_services/search-product.service';
-import { ToastService } from 'src/app/_services/toast.service';
-import { UtilService } from 'src/app/_services/util.service';
+import { ToastService }         from 'src/app/_services/toast.service';
+import { UtilService }          from 'src/app/_services/util.service';
+import { PrintService }         from 'src/app/services/print.service';
+
 import * as UtilFunc from 'src/app/_helpers/util.helper';
-import { PrintService } from 'src/app/services/print.service';
+import { Constants } from 'src/app/_configs/constants';
 
 import { SaleDetailComponent } from 'src/app/components/sale-detail/sale-detail.component';
 import { EditCashComponent } from 'src/app/components/edit-cash/edit-cash.component';
+import { async } from 'q';
 
 const commands = {
   LF: '\x0a',
@@ -158,6 +166,9 @@ export class SellPage implements OnInit {
 
   printers: any[] = [];
 
+  // barcode
+  barcode_value: string = '';
+
   /// receiptPrintTemplate
   header1: String = "";
   header1Status: Boolean = false;
@@ -194,14 +205,31 @@ export class SellPage implements OnInit {
   pole1: String = "";
   pole2: String = "";
 
+  // store policy
+  receiptPrintedStatus: Boolean = false;
+  storeCopyStatus: Boolean = false;
+  printBarcodeStatus: Boolean = false;
+  printBarcodeNumberStatus: Boolean = false;
+  dontPrintCustomerStatus: Boolean = false;
+  descriptionStatus: Boolean = false;
+  storeLogoStatus: Boolean = false;
+  smallSizePrintStatus: Boolean = false;
+  invoicePrintingStatus: Boolean = false;
+  printProductBarcodeStatus: Boolean = false;
+  printBillStatus: Boolean = false;
+  emailReceiptStatus: Boolean =false;
+
   // fast discount
   fast_discount: String = "0";
 
   constructor(
+    public providerProduct: SearchProductService,
+    public payment: Payment,
+    public store_policy:StorePolicy,
+
     private platform: Platform,
     private popoverController: PopoverController,
     private actionSheetController: ActionSheetController,
-    public providerProduct: SearchProductService,
     private loading: LoadingService,
     private authService: AuthService,
     private cartService: CartService,
@@ -210,8 +238,8 @@ export class SellPage implements OnInit {
     private utilService: UtilService,
     private nav: NavController,
     private fb: FormBuilder,
-    public payment: Payment,
     private print: PrintService,
+    private barcodeScanner: BarcodeScanner,
 
   ) {
     this.authService.currentUser.subscribe(user => {
@@ -227,6 +255,7 @@ export class SellPage implements OnInit {
         this.main_outlet = result.body[0];
       }
     });
+
     this.optionAutoComplete = new AutoCompleteOptions();
     this.optionAutoComplete.autocomplete = 'on';
     this.optionAutoComplete.debounce = 750;
@@ -235,8 +264,10 @@ export class SellPage implements OnInit {
     this.form = this.fb.group({
       open_value: ['', [Validators.required, Validators.min(1)]],
       open_note: ['']
-    })
+    });
+
     this.payment.load();
+    // this.store_policy.load();
     this.addPrinterList();
   }
 
@@ -246,8 +277,10 @@ export class SellPage implements OnInit {
       this.is_mobile = width <= 576;
     });
     this.getReceiptTemplate();
+    this.getStorePolicy();
     this.getFastDiscount();
     this.loadLastSale();
+    this.generateBarcode();
   }
 
   ionViewDidEnter() {
@@ -941,6 +974,9 @@ export class SellPage implements OnInit {
   parkSale() {
     this.openNote(Constants.message.sale_note.park, 'Park', () => {
       this.cartService.cart.sale_status = 'parked';
+      if(this.printBillStatus){
+        this.printSale();
+      }
       this.cartService.cart.save(() => {
         this.toastService.show(Constants.message.sale.parked);
         this.cartService.cart.delete(() => {
@@ -1106,178 +1142,206 @@ export class SellPage implements OnInit {
 
   printSale() {
     const printMac = this.printers[0]?.id;
-
     const date = new Date(Date.now())
     const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
     let receipt = "";
     receipt += commands.CASH_DRAWER.CD_KICK_2;
-
-    receipt += commands.HARDWARE.HW_INIT;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += this.pole1;
-    receipt += commands.EOL;
-    receipt += this.pole2;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_2WIDTH;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += this.header1;
-    receipt += commands.EOL;
-    receipt += this.header2;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_NORMAL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += this.header3;
-    receipt += commands.EOL;
-    receipt += this.header4;
-    receipt += commands.EOL;
-    receipt += this.header5;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_4SQUARE;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += this.cartService.cart.store_info.store_name;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_NORMAL;
-    receipt += this.cartService.cart.store_info.physical_address.country.country_name + " " + this.cartService.cart.store_info.physical_address.city + " " + this.cartService.cart.store_info.physical_address.street;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += this.cartService.cart.store_info.phone;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += "Receipt ";
-    receipt += this.cartService.cart.sale_number;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_NORMAL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += commands.EOL;
-    receipt += dateNow;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_NORMAL;
-    receipt += commands.HORIZONTAL_LINE.HR_58MM;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    this.cartService.cart.products.forEach((p) => {
+    if (this.receiptPrintedStatus) {
+      receipt += commands.HARDWARE.HW_INIT;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.pole1;
+      receipt += commands.EOL;
+      receipt += this.pole2;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_2WIDTH;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.header1;
+      receipt += commands.EOL;
+      receipt += this.header2;
       receipt += commands.EOL;
       receipt += commands.TEXT_FORMAT.TXT_NORMAL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += p.product_name;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.header3;
+      receipt += commands.EOL;
+      receipt += this.header4;
+      receipt += commands.EOL;
+      receipt += this.header5;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_4SQUARE;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.cartService.cart.store_info.store_name;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += this.cartService.cart.store_info.physical_address.country.country_name + " " + this.cartService.cart.store_info.physical_address.city + " " + this.cartService.cart.store_info.physical_address.street;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += this.cartService.cart.store_info.phone;
+      // customer information print
+      if (!this.dontPrintCustomerStatus) {
+        receipt += commands.EOL;
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+        receipt += "Customer Info :";
+        receipt += this.cartService.cart.customer.username;
+      }
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += "Receipt ";
+      receipt += this.cartService.cart.sale_number;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += commands.EOL;
+      receipt += dateNow;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.HORIZONTAL_LINE.HR_58MM;
+      // receipt += commands.EOL;
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      this.cartService.cart.products.forEach((p) => {
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+        receipt += p.product_name;
+        // receipt += commands.EOL;
+        // product description print
+        if (this.descriptionStatus) {
+          receipt += commands.EOL;
+          receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+          receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+          receipt += p.product_description;
+        }
+        // product barcode print
+        if (this.printProductBarcodeStatus) {
+          receipt += commands.EOL;
+          receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+          receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+          receipt += "Barcode: ";
+          receipt += p.product_barcode;
+        }
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+        receipt += `${p.qty}     `;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+        receipt += p.discountedTotalWithoutGlobal_str;
+
+      })
+      receipt += commands.EOL;
+      receipt += commands.HORIZONTAL_LINE.HR_58MM;
       receipt += commands.EOL;
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += `${p.qty}     `;
+      receipt += "Subtotal     ";
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += p.discountedTotalWithoutGlobal_str;
+      receipt += this.cartService.cart.subTotal_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += `Discount${this.cartService.cart.discount_rate}     `;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.cartService.cart.discount_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += `Total Tax${this.cartService.cart.taxRate_str}     `;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.cartService.cart.taxAmount_str;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Sale Total     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.cartService.cart.totalIncl_str;
+      // receipt += commands.EOL;
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      // receipt += "Voided     ";
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      // receipt += this.cartService.cart.voidedAmount_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Change     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += UtilFunc.getPriceWithCurrency(this.cartService.cart.change);
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Balance     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += UtilFunc.getPriceWithCurrency(this.cartService.cart.total_to_pay);
+      receipt += commands.EOL;
+      receipt += commands.EOL;
 
-    })
-    receipt += commands.EOL;
-    receipt += commands.HORIZONTAL_LINE.HR2_58MM;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += "Subtotal     ";
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += this.cartService.cart.subTotal_str;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += `Discount${this.cartService.cart.discount_rate}     `;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += this.cartService.cart.discount_str;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += `Total Tax${this.cartService.cart.taxRate_str}     `;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += this.cartService.cart.taxAmount_str;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += "Sale Total     ";
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += this.cartService.cart.totalIncl_str;
-    // receipt += commands.EOL;
-    // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    // receipt += "Voided     ";
-    // receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    // receipt += this.cartService.cart.voidedAmount_str;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += "Change     ";
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += UtilFunc.getPriceWithCurrency(this.cartService.cart.change);
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += "Balance     ";
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += UtilFunc.getPriceWithCurrency(this.cartService.cart.total_to_pay);
-    receipt += commands.EOL;
-    receipt += commands.EOL;
+      if (this.policy1Status && this.policy1) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy1;
+        receipt += commands.EOL;
+      }
+      if (this.policy2Status && this.policy2) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy2;
+        receipt += commands.EOL;
+      }
+      if (this.policy3Status && this.policy3) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy3;
+        receipt += commands.EOL;
+      }
+      if (this.policy4Status && this.policy4) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy4;
+        receipt += commands.EOL;
+      }
+      if (this.policy5Status && this.policy5) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy5;
+        receipt += commands.EOL;
+      }
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      if (this.ticketPolicyStatus) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.ticketPolicy;
+        receipt += commands.EOL;
+      }
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      if (this.marketing1Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing1;
+        receipt += commands.EOL;
+      }
+      if (this.marketing2Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing2;
+        receipt += commands.EOL;
+      }
+      if (this.marketing3Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing3;
+        receipt += commands.EOL;
+      }
+      if (this.marketing4Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing4;
+        receipt += commands.EOL;
+      }
+      if (this.marketing5Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing5;
+        receipt += commands.EOL;
+      }
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    }
 
-    if (this.policy1Status && this.policy1) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.policy1;
-      receipt += commands.EOL;
-    }
-    if (this.policy2Status && this.policy2) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.policy2;
-      receipt += commands.EOL;
-    }
-    if (this.policy3Status && this.policy3) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.policy3;
-      receipt += commands.EOL;
-    }
-    if (this.policy4Status && this.policy4) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.policy4;
-      receipt += commands.EOL;
-    }
-    if (this.policy5Status && this.policy5) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.policy5;
-      receipt += commands.EOL;
-    }
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    if (this.ticketPolicyStatus) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.ticketPolicy;
-      receipt += commands.EOL;
-    }
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    if (this.marketing1Status) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.marketing1;
-      receipt += commands.EOL;
-    }
-    if (this.marketing2Status) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.marketing2;
-      receipt += commands.EOL;
-    }
-    if (this.marketing3Status) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.marketing3;
-      receipt += commands.EOL;
-    }
-    if (this.marketing4Status) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.marketing4;
-      receipt += commands.EOL;
-    }
-    if (this.marketing5Status) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.marketing5;
-      receipt += commands.EOL;
-    }
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
 
     console.log(receipt);
     this.print.sendToBluetoothPrinter(printMac, receipt);
 
+    if (this.storeCopyStatus) {
+      this.print.sendToBluetoothPrinter(printMac, receipt);
+    }
   }
 
   printLastSale() {
@@ -1288,178 +1352,397 @@ export class SellPage implements OnInit {
     let receipt = "";
     receipt += commands.CASH_DRAWER.CD_KICK_2;
 
-    receipt += commands.HARDWARE.HW_INIT;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += this.pole1;
-    receipt += commands.EOL;
-    receipt += this.pole2;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_2WIDTH;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += this.header1;
-    receipt += commands.EOL;
-    receipt += this.header2;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_NORMAL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += this.header3;
-    receipt += commands.EOL;
-    receipt += this.header4;
-    receipt += commands.EOL;
-    receipt += this.header5;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_4SQUARE;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += this.last_sale.store_info.store_name;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_NORMAL;
-    receipt += this.last_sale.store_info.physical_address.country.country_name + " " + this.last_sale.store_info.physical_address.city + " " + this.last_sale.store_info.physical_address.street;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += this.last_sale.store_info.phone;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += "Receipt ";
-    receipt += this.last_sale.sale_number;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_NORMAL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-    receipt += commands.EOL;
-    receipt += dateNow;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_NORMAL;
-    receipt += commands.HORIZONTAL_LINE.HR_58MM;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    this.last_sale.products.forEach((p) => {
+    if (this.receiptPrintedStatus) {
+      receipt += commands.HARDWARE.HW_INIT;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.pole1;
+      receipt += commands.EOL;
+      receipt += this.pole2;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_2WIDTH;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.header1;
+      receipt += commands.EOL;
+      receipt += this.header2;
       receipt += commands.EOL;
       receipt += commands.TEXT_FORMAT.TXT_NORMAL;
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += p.product_name;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.header3;
+      receipt += commands.EOL;
+      receipt += this.header4;
+      receipt += commands.EOL;
+      receipt += this.header5;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_4SQUARE;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.last_sale.store_info.store_name;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += this.last_sale.store_info.physical_address.country.country_name + " " + this.last_sale.store_info.physical_address.city + " " + this.last_sale.store_info.physical_address.street;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += this.last_sale.store_info.phone;
+      // customer information print
+      if (!this.dontPrintCustomerStatus) {
+        receipt += commands.EOL;
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+        receipt += "Customer Info :";
+        receipt += this.cartService.cart.customer.username;
+      }
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += "Receipt ";
+      receipt += this.last_sale.sale_number;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += commands.EOL;
+      receipt += dateNow;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.HORIZONTAL_LINE.HR_58MM;
+      // receipt += commands.EOL;
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      this.last_sale.products.forEach((p) => {
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+        receipt += p.product_name;
+        // product description print
+        if (this.descriptionStatus) {
+          receipt += commands.EOL;
+          receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+          receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+          receipt += p.product_description;
+        }
+        // product barcode print
+        if (this.printProductBarcodeStatus) {
+          receipt += commands.EOL;
+          receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+          receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+          receipt += "Barcode: ";
+          receipt += p.product_barcode;
+        }
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+        receipt += `${p.qty}     `;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+        receipt += p.discountedTotalWithoutGlobal_str;
+
+      })
+      receipt += commands.EOL;
+      receipt += commands.HORIZONTAL_LINE.HR_58MM;
       receipt += commands.EOL;
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-      receipt += `${p.qty}     `;
+      receipt += "Subtotal     ";
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-      receipt += p.discountedTotalWithoutGlobal_str;
+      receipt += this.last_sale.subTotal_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += `Discount${this.last_sale.discount_rate}     `;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.last_sale.discount_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += `Total Tax${this.last_sale.taxRate_str}     `;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.last_sale.taxAmount_str;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Sale Total     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.last_sale.totalIncl_str;
+      // receipt += commands.EOL;
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      // receipt += "Voided     ";
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      // receipt += this.cartService.cart.voidedAmount_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Change     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += UtilFunc.getPriceWithCurrency(this.last_sale.change);
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Balance     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += UtilFunc.getPriceWithCurrency(this.last_sale.total_to_pay);
+      receipt += commands.EOL;
+      receipt += commands.EOL;
 
-    })
-    receipt += commands.EOL;
-    receipt += commands.HORIZONTAL_LINE.HR2_58MM;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += "Subtotal     ";
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += this.last_sale.subTotal_str;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += `Discount${this.last_sale.discount_rate}     `;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += this.last_sale.discount_str;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += `Total Tax${this.last_sale.taxRate_str}     `;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += this.last_sale.taxAmount_str;
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += "Sale Total     ";
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += this.last_sale.totalIncl_str;
-    // receipt += commands.EOL;
-    // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    // receipt += "Voided     ";
-    // receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    // receipt += this.cartService.cart.voidedAmount_str;
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += "Change     ";
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += UtilFunc.getPriceWithCurrency(this.last_sale.change);
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
-    receipt += "Balance     ";
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
-    receipt += UtilFunc.getPriceWithCurrency(this.last_sale.total_to_pay);
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-
-    if (this.policy1Status && this.policy1) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.policy1;
+      if (this.policy1Status && this.policy1) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy1;
+        receipt += commands.EOL;
+      }
+      if (this.policy2Status && this.policy2) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy2;
+        receipt += commands.EOL;
+      }
+      if (this.policy3Status && this.policy3) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy3;
+        receipt += commands.EOL;
+      }
+      if (this.policy4Status && this.policy4) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy4;
+        receipt += commands.EOL;
+      }
+      if (this.policy5Status && this.policy5) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy5;
+        receipt += commands.EOL;
+      }
       receipt += commands.EOL;
-    }
-    if (this.policy2Status && this.policy2) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.policy2;
       receipt += commands.EOL;
-    }
-    if (this.policy3Status && this.policy3) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.policy3;
+      if (this.ticketPolicyStatus) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.ticketPolicy;
+        receipt += commands.EOL;
+      }
       receipt += commands.EOL;
-    }
-    if (this.policy4Status && this.policy4) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.policy4;
       receipt += commands.EOL;
-    }
-    if (this.policy5Status && this.policy5) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.policy5;
+      if (this.marketing1Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing1;
+        receipt += commands.EOL;
+      }
+      if (this.marketing2Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing2;
+        receipt += commands.EOL;
+      }
+      if (this.marketing3Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing3;
+        receipt += commands.EOL;
+      }
+      if (this.marketing4Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing4;
+        receipt += commands.EOL;
+      }
+      if (this.marketing5Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing5;
+        receipt += commands.EOL;
+      }
       receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
     }
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    if (this.ticketPolicyStatus) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.ticketPolicy;
-      receipt += commands.EOL;
-    }
-    receipt += commands.EOL;
-    receipt += commands.EOL;
-    if (this.marketing1Status) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.marketing1;
-      receipt += commands.EOL;
-    }
-    if (this.marketing2Status) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.marketing2;
-      receipt += commands.EOL;
-    }
-    if (this.marketing3Status) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.marketing3;
-      receipt += commands.EOL;
-    }
-    if (this.marketing4Status) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.marketing4;
-      receipt += commands.EOL;
-    }
-    if (this.marketing5Status) {
-      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
-      receipt += this.marketing5;
-      receipt += commands.EOL;
-    }
-    receipt += commands.EOL;
-    receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
 
     console.log(receipt);
     this.print.sendToBluetoothPrinter(printMac, receipt);
 
+    if (this.storeCopyStatus) {
+      this.print.sendToBluetoothPrinter(printMac, receipt);
+    }
+
+  }
+
+  emailToCustomer(email): void{
+    const discount_symbol = { percent: '%', amount: '$' };
+    const data = {};
+    
+    let template: any = "";
+    template += `<div style="display: block; width: 100%; padding-left: 40%;
+                          font-family: Lato;
+                          font-size: 24px;
+                          font-style: normal;
+                          font-weight: 700;
+                          line-height: 29px;">
+                        <div><b style="margin-bottom: 16px">${this.cartService.cart.store_info.store_name}</b></div>
+                        <div style="font-weight: 400;">Outlet: ${this.cartService.cart.store_info.physical_address.country.country_name} ${this.cartService.cart.store_info.physical_address.city} ${this.cartService.cart.store_info.physical_address.street}</div>
+                    </div>`;
+
+        this.cartService.cart.products.forEach(product => {
+            template +=
+                `<div  style="display: flex;
+                      margin-bottom: 10px;
+                      font-family: Lato;
+                      font-size: 24px;
+                      font-style: normal;
+                      font-weight: 400;
+                      line-height: 29px;
+                      letter-spacing: 0em;
+                      text-align: left;" >
+                      <div style="display: flex; width: 50%">
+                            <div>${product.qty}</div>
+                            <div style="margin-left: 24px;">`;
+            if (product.product_name) {
+                template += `<div>${product.product_name}</div>
+                             <div>
+                               <small>${product.variant_name}</small>
+                             </div>`;
+            } else {
+                template += `<div>${product.product_name}</div>`;
+            }
+            if (product.discount.value) {
+                template += `<div ><small>Disc: ${product.discount.value}</small></div>`;
+            }
+            if (product.note) {
+                template += `<div>
+                                    <small>Note: ${product.note}</small>
+                                 </div>`;
+            }
+            template += `</div>
+                     </div>`;
+            const totalPerItem = (product.qty * product.price * (1 - product.discount.value / 100)).toFixed();
+            template +=
+                `<div style="width: 50%">
+                            <div>$ ${totalPerItem}</div>`;
+            if (product.discount.value > 0) {
+                template += `<div style="text-decoration: line-through">
+                                <small>$ ${product.qty * product.price}</small>
+                            </div>`;
+            }
+            template +=
+                `</div>
+                </div>`;
+        });
+
+        template +=
+            `<div  style="
+                      border-top: 1px solid;
+                      margin-top: 16px;
+                      padding-bottom: 16px;
+                      padding-left: 48px;
+                      border-bottom: 1px solid;
+                      padding-top: 24px;
+                      font-family: Lato;
+                      font-size: 24px;
+                      font-style: normal;
+                      font-weight: 400;
+                      line-height: 29px;
+                      letter-spacing: 0em;
+                      text-align: left;
+                      ">
+                      <div style="display: flex">
+                            <div style="width: 50%">Sub Total</div>
+                            <div style="width: 50%">${this.cartService.cart.subTotal_str}</div>
+                      </div>`;
+        if (this.cartService.cart.discount.value > 0) {
+            template += `<div style="display: flex">
+                                <div style="width: 50%">Additional Discount</div>
+                                <div style="width: 50%">
+                                  ${this.cartService.cart.discount.value} ${discount_symbol[this.cartService.cart.discount.mode]}
+                                </div>
+                        </div>`;
+        }
+        if (this.cartService.cart.tax) {
+            template += `<div style="display: flex; justify-content: space-between">
+                            <div style="width: 50%">Tax</div>
+                            <div style="width: 50%">$ ${this.cartService.cart.tax}</div>
+                          </div>`;
+
+        }
+        template +=
+            `</div>`;
+
+        template +=
+            `<div style="
+                          padding-top: 16px;
+                          display: flex;
+                          font-family: Lato;
+                          font-size: 24px;
+                          font-style: normal;
+                          font-weight: 400;
+                          line-height: 29px;
+                          letter-spacing: 0em;
+                          text-align: left;
+                          margin-bottom: 16px;
+                          padding-bottom: 16px;
+                          border-bottom: 1px solid;
+                        ">
+                          <div style="width: 50%;font-weight: bold">
+                            Sale Total <small>${this.cartService.cart.total_items} items</small>
+                          </div>
+                          <div style="width: 50%;">${this.cartService.cart.totalIncl_str}</div>
+                </div>`;
+
+        this.cartService.cart.payments.forEach(payment => {
+            const date = payment.created_at.toString().split('T')[0];
+            template +=
+                `<div style="padding-left: 48px">
+                      <div style="display: flex;
+                           font-family: Lato;
+                           font-size: 24px;
+                           font-style: normal;
+                           font-weight: 400;
+                           line-height: 29px;
+                           letter-spacing: 0em;
+                           text-align: left;
+                           margin-bottom: 16px;
+                           padding-bottom: 16px;
+                           border-bottom: 1px solid;" >
+                            <div style="width: 50%;">
+                                  <div>
+                                    ${payment.type}
+                                  </div>
+                                  <div>
+                                    <small>` + date + `</small>
+                                  </div>
+                            </div>
+                            <div style="width: 50%;">${payment.amount}</div>
+                      </div>      
+                </div>`;
+        });
+        template +=
+            `<div style="display: flex;
+                           margin-bottom: 16px;
+                           padding-bottom: 16px; ">
+                        <div style="
+                              font-weight: bold;
+                              font-family: Lato;
+                              font-size: 24px;
+                              font-style: normal;
+                              line-height: 29px;
+                              letter-spacing: 0em;
+                              text-align: left;
+                              margin-bottom: 16px;
+                              padding-bottom: 16px;
+                             width: 50%;">Change</div>
+                        <div style="width: 50%">${this.cartService.cart.change}</div>
+               </div>`;
+    console.log("test:", template);
+
+    Object.assign(data, {email, template: template, invoice_number: this.cartService.cart.sale_number});
+
+    this.utilService.post('sell/email', data).subscribe(result => {
+      console.log(result);
+      //  this.cart.save(() => {
+      //   this._completeSale();
+      // });
+    });
   }
 
   completeSale() {
     this.cartService.completeSale(async () => {
       this.toastService.show(Constants.message.successComplete);
-      this.printSale();
+      
+      console.log(this.cart.customer);
+      if(this.cart.customer && this.emailReceiptStatus) {
+        this.emailToCustomer(this.cart.customer.data.email);
+      }
+
+      if(this.receiptPrintedStatus) {
+        if(this.invoicePrintingStatus) {
+          this.invoicePrintConfirm();
+          return;
+        } else {
+          this.printSale();
+        }
+      }      
+
       this.loadLastSale();
       if (this.cart.payment_status == 'cash') {
         const popover = await this.popoverController.create({
@@ -1540,6 +1823,20 @@ export class SellPage implements OnInit {
         this.pole1 = result.body.pole1;
         this.pole2 = result.body.pole2;
       }
+    });
+  }
+
+  getStorePolicy(): void {
+    this.store_policy.load(()=>{
+      this.receiptPrintedStatus = this.store_policy.prints_settings.receipt_printed;
+      this.storeCopyStatus = this.store_policy.prints_settings.store_copy;
+      this.printBarcodeStatus   = this.store_policy.prints_settings.print_barcode;
+      this.descriptionStatus = this.store_policy.prints_settings.description;
+      this.dontPrintCustomerStatus = this.store_policy.prints_settings.dont_print_customer;
+      this.invoicePrintingStatus = this.store_policy.prints_settings.invoice_printing;
+      this.printProductBarcodeStatus = this.store_policy.prints_settings.print_product;
+      this.printBillStatus = this.store_policy.prints_settings.print_bill;
+      this.emailReceiptStatus = this.store_policy.prints_settings.email_receipt;
     });
   }
 
@@ -1659,6 +1956,73 @@ export class SellPage implements OnInit {
   taxExempt() {
     this.cart.is_ignoreTax = true;
     this.cart.save();
+  }
+
+  generateBarcode() {
+    console.log('generate barcode...');
+    const date = new Date(Date.now());
+    let value = '';
+    value = this.cart.sale_number;
+    // value = date.getFullYear() + (date.getMonth() + 1) + date.getDate() + date.getHours() + date.getMinutes() + date.getSeconds();
+
+    this.barcodeScanner.encode(this.barcodeScanner.Encode.TEXT_TYPE, value).then(data => {
+      console.log('barcode value : ', data);
+      this.barcode_value = data;
+    }).catch(err => {
+      console.log('Error : ', err);
+    })
+  }
+
+  invoicePrintConfirm() {
+    let title = 'Confirm Invoice Printing';
+    let msg = 'Do you want to print the invoice?';
+    this.alertService.presentAlertConfirm(
+      title,
+      msg,
+      async () => {
+        this.printSale();
+        this.loadLastSale();
+        if (this.cart.payment_status == 'cash') {
+          const popover = await this.popoverController.create({
+            component: PayChangeComponent,
+            // event: ev,
+            cssClass: 'popover_custom fixed-width',
+            translucent: true,
+            componentProps: { change: UtilFunc.getPriceWithCurrency(this.cart.change) }
+            // componentProps: { change: UtilFunc.getPriceWithCurrency(this.change) }
+          });
+
+          popover.onDidDismiss().then(result => {
+            this.cartService.newCart();
+          });
+          await popover.present();
+        } else {
+          this.cartService.newCart();
+        }
+      },
+      async () => {
+        this.loadLastSale();
+        if (this.cart.payment_status == 'cash') {
+          const popover = await this.popoverController.create({
+            component: PayChangeComponent,
+            // event: ev,
+            cssClass: 'popover_custom fixed-width',
+            translucent: true,
+            componentProps: { change: UtilFunc.getPriceWithCurrency(this.cart.change) }
+            // componentProps: { change: UtilFunc.getPriceWithCurrency(this.change) }
+          });
+
+          popover.onDidDismiss().then(result => {
+            this.cartService.newCart();
+          });
+          await popover.present();
+        } else {
+          this.cartService.newCart();
+        }
+      },
+      'Yes',
+      'No'
+    );
   }
 
 }

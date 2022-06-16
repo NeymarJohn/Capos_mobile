@@ -1,20 +1,21 @@
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { RouteReuseStrategy } from '@angular/router';
+import { NgModule }             from '@angular/core';
+import { BrowserModule }        from '@angular/platform-browser';
+import { RouteReuseStrategy }   from '@angular/router';
 
-import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
-import { IonicGestureConfig } from './_configs/IonicGestureConfig';
+import { IonicModule, IonicRouteStrategy }  from '@ionic/angular';
+import { IonicGestureConfig }               from './_configs/IonicGestureConfig';
 
-import { AppComponent } from './app.component';
-import { AppRoutingModule } from './app-routing.module';
-import { JwtModule } from '@auth0/angular-jwt';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { ShareModule } from './_shared/share.module';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { Camera } from '@ionic-native/Camera/ngx';
-import { Printer } from '@ionic-native/printer/ngx';
-import { Device } from "@ionic-native/device/ngx";
-import {BluetoothSerial} from '@ionic-native/bluetooth-serial/ngx';
+import { AppComponent }             from './app.component';
+import { AppRoutingModule }         from './app-routing.module';
+import { JwtModule }                from '@auth0/angular-jwt';
+import { NgxDatatableModule }       from '@swimlane/ngx-datatable';
+import { ShareModule }              from './_shared/share.module';
+import { BrowserAnimationsModule }  from '@angular/platform-browser/animations';
+import { Camera }           from '@ionic-native/Camera/ngx';
+import { Printer }          from '@ionic-native/printer/ngx';
+import { Device }           from "@ionic-native/device/ngx";
+import { BluetoothSerial }  from '@ionic-native/bluetooth-serial/ngx';
+import { BarcodeScanner }   from '@ionic-native/barcode-scanner/ngx';
 
 export function tokenGetter(): any {
   return localStorage.getItem('token');
@@ -38,9 +39,10 @@ export function tokenGetter(): any {
     Camera, 
     Printer,
     Device,
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }, 
     IonicGestureConfig,
-    BluetoothSerial
+    BluetoothSerial,
+    BarcodeScanner,
+    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },    
   ],
   bootstrap: [AppComponent],
 })
