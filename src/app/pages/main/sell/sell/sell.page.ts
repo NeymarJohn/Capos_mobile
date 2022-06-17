@@ -38,6 +38,8 @@ import { SaleDetailComponent } from 'src/app/components/sale-detail/sale-detail.
 import { EditCashComponent } from 'src/app/components/edit-cash/edit-cash.component';
 import { async } from 'q';
 
+import { OpenRegisterPage } from 'src/app/pages/main/sell/open-register/open-register.page';
+
 const commands = {
   LF: '\x0a',
   ESC: '\x1b',
@@ -226,6 +228,7 @@ export class SellPage implements OnInit {
     public providerProduct: SearchProductService,
     public payment: Payment,
     public store_policy:StorePolicy,
+    public open_register: OpenRegisterPage,
 
     private platform: Platform,
     private popoverController: PopoverController,
@@ -1761,6 +1764,7 @@ export class SellPage implements OnInit {
       } else {
         this.cartService.newCart();
       }
+      this.open_register.initTable();
     })
   }
 
@@ -1961,8 +1965,8 @@ export class SellPage implements OnInit {
   generateBarcode() {
     console.log('generate barcode...');
     const date = new Date(Date.now());
-    let value = '';
-    value = this.cart.sale_number;
+    let value = date.getTime();
+    // value = this.cart.sale_number;
     // value = date.getFullYear() + (date.getMonth() + 1) + date.getDate() + date.getHours() + date.getMinutes() + date.getSeconds();
 
     this.barcodeScanner.encode(this.barcodeScanner.Encode.TEXT_TYPE, value).then(data => {
