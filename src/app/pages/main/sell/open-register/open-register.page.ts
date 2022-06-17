@@ -15,9 +15,6 @@ import { CartService } from 'src/app/_services/cart.service';
 import { PrintService }   from 'src/app/services/print.service';
 import { CashDetailComponent } from 'src/app/components/cash-detail/cash-detail.component';
 
-// import { Platform } from '@ionic/angular';
-// import { BackgroundMode } from '@ionic-native/background-mode';
-
 
 @Component({
   selector: 'app-open-register',
@@ -43,6 +40,7 @@ export class OpenRegisterPage implements OnInit {
   ];
   show_columns:any[] = [1, 2, 3];
   tableloading: boolean = false;
+  
 
   printers: any[] = [];
 
@@ -50,6 +48,9 @@ export class OpenRegisterPage implements OnInit {
   batchReportStatus: boolean = false;
   paymentSummaryStatus: boolean = false;
   emailInventoryStatus: boolean = false;
+  cigaretteSummaryStatus: boolean = false;
+  notRevenueStatus: boolean = false; 
+  salesPersonStatus: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -59,15 +60,12 @@ export class OpenRegisterPage implements OnInit {
     private nav: NavController,
     private popoverController: PopoverController,
     private alertService: AlertService,
-    private cartService: CartService,
+    public cartService: CartService,
     private fb: FormBuilder,
     // public openClose: Openclose,
     // public lastClose: Openclose,
     private print: PrintService,
     public store_policy:StorePolicy,
-
-    // private backgroundMode: BackgroundMode,
-    // private plt: Platform
   ) {
     this.authService.checkPremission('close_register');
     this.form = this.fb.group({
@@ -75,10 +73,12 @@ export class OpenRegisterPage implements OnInit {
       open_note: ['']
     });
     this.addPrinterList();
-    // this.initBackgroundMode();
+    
   }
 
   ngOnInit() {
+    console.log('ngOnInit');
+    this.cartService.init();
     this.getCategoryTypeList();
     this.getStorePolicy();
     if('close'.includes(this.mode)) {
@@ -86,34 +86,13 @@ export class OpenRegisterPage implements OnInit {
     } else {
       this.cartService.getLastClose();
     }
-    this.initTable();
-  }
-
-  ionViewDidEnter() {
     this.getReportbyCategories();
   }
 
-  // private initBackgroundMode() {
-  //   this.plt.ready().then(()=>{
-  //     this.backgroundMode.setDefaults({silent: true});
-  //     this.backgroundMode.enable();
-  //     if(this.plt.is("android")) {
-  //       this.backgroundMode.on('activate').subscribe(()=>{
-  //         setTimeout(this.checkCurrentTime, 1000);
-  //       })
-  //     }
-  //   })
-  // }
-
-  // checkCurrentTime() {
-  //   let date = new Date();
-  //   let hour = date.getHours();
-  //   console.log("hour: " + hour);
-  //   // if(hour == "04") {
-  //   //   ////action
-  //   //   console.log(hour);
-  //   // } 
-  // }
+  ionViewDidEnter() {
+    console.log('ionViewDidEnter');
+    this.getReportbyCategories();
+  }
 
   public get mode():string {
     if(this.cartService.openClose._id) {
@@ -166,7 +145,14 @@ export class OpenRegisterPage implements OnInit {
     await popover.present();
   }
 
-  closeRegister(){
+  public closeRegister(){
+
+    if(this.mode === "open") {
+      console.log("register must open");
+      return;
+    }
+
+    this.getReportbyCategories();
     
     let title = 'Close Register';
     let msg = 'Are you sure to want to close this register?';
@@ -175,12 +161,12 @@ export class OpenRegisterPage implements OnInit {
         this.toastService.show('Register Closed successfully.');
       })
     });
-    // this.getReportbyCategories();
+    
     if (!this.batchReportStatus){
       this.printReport();
     }
-    if(this.emailInventoryStatus) {
-      // this.emailToCustomer();
+    if(this.cartService.cart.customer && this.emailInventoryStatus) {
+      this.emailToCustomer(this.cartService.cart.customer.data.email);
     }
   }
 
@@ -192,7 +178,11 @@ export class OpenRegisterPage implements OnInit {
       start: this.openClose.opening_time,
       user_id: this.openClose.user._id,
       end: '',
-    }
+    };
+    console.log(this.cartService.isOpenRegister);
+    console.log(filter);
+    console.log(this.openClose);
+    console.log(this.lastClose);
 
     if(filter.start == '') {
       this.tableloading = false;
@@ -219,23 +209,44 @@ export class OpenRegisterPage implements OnInit {
 
   getReportDatabyCategories() {
     this.reportDatabyCategories = [];
-    for(let c of this.categories) {
-      let cData = this.allData.filter(item => item.product_id.type == c);
-      console.log(cData);
-      let totalQty = cData.reduce((a, b)=>a + b.qty, 0);
-      let price = cData[0].price;
-      let totalPrice = totalQty * price;
-      let catname = this.categoryTypeList.filter(item => item._id == c);
-      let name = "";
-      if(catname) {
-        name = catname[0].name;
+    if(this.cigaretteSummaryStatus) {
+      this.categoryTypeList = this.categoryTypeList.filter(item => item.cigarette != true);
+    }
+    if(this.notRevenueStatus) {
+      this.categoryTypeList = this.categoryTypeList.filter(item=>item.revenue != true);
+    }
+
+    for(let c of this.categoryTypeList) {
+      let cData = this.allData.filter(item => item.product_id.type == c._id);
+      if (cData.length > 0) {
+        console.log(cData[0]);
+        let totalQty = cData.reduce((a, b)=>a + b.qty, 0);
+        let price = cData[0].price;
+        let totalPrice = totalQty * price;
+        let catname = this.categoryTypeList.filter(item => item._id == c._id);
+        let name = "";
+        if(catname) {
+          name = catname[0].name;
+        }
+        let data = {
+          name: name,
+          sale_qty: totalQty,
+          sale_sum:this.util.getPriceWithCurrency(totalPrice)
+        };
+        this.reportDatabyCategories.push(data);
+      } else {
+        let catname = this.categoryTypeList.filter(item => item._id == c._id);
+        let name = "";
+        if(catname) {
+          name = catname[0].name;
+        }
+        let data = {
+          name: name,
+          sale_qty: 0,
+          sale_sum: 0
+        };
+        this.reportDatabyCategories.push(data);
       }
-      let data = {
-        name: name,
-        sale_qty: totalQty,
-        sale_sum:this.util.getPriceWithCurrency(totalPrice)
-      };
-      this.reportDatabyCategories.push(data);
     }
     this.tableloading = false;
   }
@@ -256,6 +267,9 @@ export class OpenRegisterPage implements OnInit {
       this.batchReportStatus = this.store_policy.batch_settings.batch_report;
       this.paymentSummaryStatus = this.store_policy.batch_settings.payment_summary;
       this.emailInventoryStatus = this.store_policy.batch_settings.email_invertory;
+      this.cigaretteSummaryStatus = this.store_policy.batch_settings.cigarette_summary;
+      this.notRevenueStatus = this.store_policy.batch_settings.not_revenue;
+      this.salesPersonStatus = this.store_policy.batch_settings.sales_person;
     });
   }
 
@@ -365,7 +379,7 @@ export class OpenRegisterPage implements OnInit {
     });
     template += `</div>`;
 
-    // console.log("test:", template);
+    console.log("test:", template);
 
     Object.assign(data, {email, template: template});
 
@@ -377,7 +391,8 @@ export class OpenRegisterPage implements OnInit {
     });
   }
 
-  initTable() {
+  public initTable() {
+    console.log('initTable');
     this.getReportbyCategories();
   }
 

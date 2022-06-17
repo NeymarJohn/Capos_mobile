@@ -16,6 +16,8 @@ import { Printer }          from '@ionic-native/printer/ngx';
 import { Device }           from "@ionic-native/device/ngx";
 import { BluetoothSerial }  from '@ionic-native/bluetooth-serial/ngx';
 import { BarcodeScanner }   from '@ionic-native/barcode-scanner/ngx';
+import { BackgroundMode } from '@awesome-cordova-plugins/background-mode/ngx';
+import { OpenRegisterPage } from 'src/app/pages/main/sell/open-register/open-register.page';
 
 export function tokenGetter(): any {
   return localStorage.getItem('token');
@@ -42,6 +44,8 @@ export function tokenGetter(): any {
     IonicGestureConfig,
     BluetoothSerial,
     BarcodeScanner,
+    BackgroundMode,
+    OpenRegisterPage,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },    
   ],
   bootstrap: [AppComponent],

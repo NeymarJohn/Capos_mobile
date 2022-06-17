@@ -2,6 +2,10 @@ import { Component } from '@angular/core';
 import { AuthService } from './_services/auth.service';
 import { DbService } from './_services/db.service';
 import { UtilService } from './_services/util.service';
+import { StorePolicy }      from 'src/app/_classes/store_policy.class';
+import { Platform } from '@ionic/angular';
+import { BackgroundMode } from '@awesome-cordova-plugins/background-mode/ngx';
+import { OpenRegisterPage } from 'src/app/pages/main/sell/open-register/open-register.page';
 
 @Component({
   selector: 'app-root',
@@ -13,9 +17,19 @@ export class AppComponent {
   cur_item: string = '';
   login_status: boolean = false;
 
+  timer_object: number = -1;
+  wait_time: number = 60000; // 1 minute
+
+  // store policy
+  autoBatchCloseStatus: boolean = false;
+
   constructor(
+    public store_policy: StorePolicy,
+    public open_register: OpenRegisterPage,
     private authService: AuthService,
     private utilService: UtilService,    
+    private backgroundMode: BackgroundMode,
+    private plt: Platform,
   ) {    
     this.utilService.isOnline = navigator.onLine;    
     this.appPages = this.authService.main_menu;
@@ -30,6 +44,10 @@ export class AppComponent {
       console.log('online');
       this.utilService.isOnline = true;
     });
+
+    this.getStorePolicy();
+
+    this.initBackgroundMode();
   }
 
   get isLoggedIn():boolean {
@@ -42,5 +60,54 @@ export class AppComponent {
 
   getMenu() {
     this.appPages = this.authService.main_menu;    
+  }
+
+  private initBackgroundMode() {
+    var flag = true;
+    this.plt.ready().then(()=>{
+      console.log("backgroundMode starting...");
+      this.timer_object = setInterval(() => {
+        this.startCheckModule();
+      }, this.wait_time);
+
+      if(this.autoBatchCloseStatus) {
+        this.backgroundMode.enable();
+      }   
+    });
+  }
+
+  stopCheckTime() {
+    clearInterval(this.timer_object);
+  }
+
+  startCheckModule() {
+    this.getStorePolicy();
+    if(!this.autoBatchCloseStatus && this.backgroundMode.isEnabled()){
+      console.log("stop timing...");
+      this.stopCheckTime();
+      this.backgroundMode.disable();  
+    } else if(this.autoBatchCloseStatus && !this.backgroundMode.isEnabled()) {
+      console.log("init timing...");
+      this.timer_object = setInterval(() => {
+        this.startCheckModule();
+      }, this.wait_time);
+      this.backgroundMode.enable();
+      // this.initBackgroundMode();
+    } else {
+      let now_date = new Date();
+      let current_hour = now_date.getHours();
+      let current_minute = now_date.getMinutes();
+      console.log(current_hour + ":" + current_minute);
+      if(current_hour === 4 && current_minute === 0){
+        console.log(current_hour);
+        this.open_register.closeRegister();
+      }
+    }
+  }
+
+  getStorePolicy(): void {
+    this.store_policy.load(()=>{
+      this.autoBatchCloseStatus = this.store_policy.batch_settings.auto_batch_close;
+    });
   }
 }

@@ -30,10 +30,13 @@ export class ProductTypePage implements OnInit {
   rows:any[];
   all_columns:any[] = [
     {prop: 'name', name: 'Name', sortable: true, checked: true},
+    {prop: 'slug', name: 'Slug', sortable: true, checked: true},
     {prop: 'touch', name: 'Touch', sortable: true, checked: true},
+    {prop: 'cigarette', name: 'Cigarette', sortable: true, checked: true},
+    {prop: 'revenue', name: 'Not Revenue', sortable: true, checked: true},
     {prop: 'description', name: 'Description', sortable: true, checked: true}
   ];
-  show_columns:any[] = [2, 3];
+  show_columns:any[] = [1,3,4,5];
 
   constructor(
     private authService: AuthService,
@@ -83,9 +86,14 @@ export class ProductTypePage implements OnInit {
       this.rows.push({
         _id: a._id,
         name: a.name,
+        slug: a.slug,
         description: a.description,        
         touch: a.touch ? '<i class="far fa-check-circle fa-lg success"></i>':'<i class="far fa-times-circle fa-lg danger"></i>',
+        cigarette: a.cigarette ? '<i class="far fa-check-circle fa-lg success"></i>':'<i class="far fa-times-circle fa-lg danger"></i>',
+        revenue: a.revenue ? '<i class="far fa-check-circle fa-lg success"></i>':'<i class="far fa-times-circle fa-lg danger"></i>',
         touchable: a.touch,
+        cigaretteable: a.cigarette,
+        revenueable: a.revenue,
         products: a.products,
         property: 'type'
       })
@@ -97,8 +105,11 @@ export class ProductTypePage implements OnInit {
     this.openEdit({
       _id: '',
       name: '',
+      slug: '',
       description: '',
       touch: false,
+      cigarette: false,
+      revenue: false,
       private_web_address: this.user.private_web_address
     })
   }

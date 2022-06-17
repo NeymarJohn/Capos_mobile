@@ -5,6 +5,8 @@ export class ProducttypeModel {
     description: string = '';
     slug: string = '';
     touch: number = 0;
+    cigarette: number = 0;
+    revenue: number = 0;
     created_at: number = 0;
     is_new: number = 0;
     is_update: number = 0;
