@@ -60,9 +60,14 @@ export class OpenRegisterService {
 
 	loadCategories() {
 		this.categories = [];
-		let filter:any;
+		let filter:any = [];
 		filter.touch = true;
-		filter.cigarette = false;
+		if(this.cigaretteSummaryStatus){
+			filter.cigarette = false;
+		}
+		if(this.notRevenueStatus) {
+			// filter.revenue = false;
+		}
 		this.utilService.get('product/type', filter).subscribe(result => {
 		  if(result && result.body) {
 		    for(let t of result.body) {
@@ -93,13 +98,12 @@ export class OpenRegisterService {
 		return this.cartService.lastClose;
 	}
 
-	public closeRegister(flag:boolean) {
+	public closeRegister() {
 		if(this.cartService.openClose._id) {
 	      this.cartService.getOpenClose();
-
+				this.cartService.closeRegister();
+				this.printReport();
 	    }
-		this.cartService.closeRegister();
-		// this.printData();
 	}
 
 	public getTableData(callback?:Function):any {
