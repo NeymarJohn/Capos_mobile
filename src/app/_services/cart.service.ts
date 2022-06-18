@@ -81,9 +81,22 @@ export class CartService {
   }
 
   getOpenClose() {
-    this.openClose.loadCurrent(()=>{}, ()=>{
-      // this.nav.navigateForward(['main/sell/open-register']);
-    });
+
+    const query = {
+        private_web_address: this.user? this.user.private_web_address: null,
+        outlet: this.user.outlet ? this.user.outlet._id : null,
+        register: this.user?this.user.outlet.register[0]:null,
+        status: 1
+    };
+    if(!this.user || !this.user.outlet) delete query.outlet;
+    this.utilService.get('sell/openclose', query).subscribe(result => {
+        if(result && result.body && result.body.length>0) {
+          this.openClose = new Openclose(this.authService, this.utilService);
+          this.openClose.loadDetails(result.body[0]);
+        }
+    }, error => {
+        console.log(error);
+    })
   }
 
   openRegister(data:any, callback?:Function) {

@@ -100,7 +100,7 @@
 			<ion-card-header class="d-flex">
 				<ion-card-title>Register Details</ion-card-title>
 				<div class="ml-auto">
-					<ion-button size="small" (click)="closeRegister()">Close Register</ion-button>
+					<ion-button size="small" (click)="closeRegister(true)">Close Register</ion-button>
 				</div>
 			</ion-card-header>
 			<ion-card-content>
@@ -176,7 +176,7 @@
 			<ion-card-content>
 				<app-table 
 				    [tb_name]="'product_type'" 
-				    [rows]="reportDatabyCategories" 
+				    [rows]="tableData" 
 				    [all_columns]="all_columns" 
 				    [show_columns]="show_columns"
 				    [show_details]="false"
