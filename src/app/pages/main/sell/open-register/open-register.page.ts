@@ -142,33 +142,17 @@ export class OpenRegisterPage implements OnInit {
       console.log("register must open to close register and print on the report");
       return;
     }
+
+    let title = 'Close Register';
+    let msg = 'Are you sure to want to close this register?';
+    this.alertService.presentAlertConfirm(title, msg, () => {
+      this.cartService.closeRegister(() => {
+        this.toastService.show('Register Closed successfully.');
+      })
+    });
+
+    this.openRegisterService.printReport();
     
-    if(flag) {
-
-      let title = 'Close Register';
-      let msg = 'Are you sure to want to close this register?';
-      this.alertService.presentAlertConfirm(title, msg, () => {
-        // this.cartService.closeRegister(() => {
-        //   this.toastService.show('Register Closed successfully.');
-        // })
-      });
-
-      this.openRegisterService.printReport();
-
-      // if (!this.batchReportStatus){
-      //   this.openRegisterService.printTableData();
-      // }
-      // if(this.cartService.cart.customer && this.emailInventoryStatus) {
-      //   this.openRegisterService.emailToCustomer(this.cartService.cart.customer.data.email);
-      // }
-    } else {
-        // if (!this.batchReportStatus){
-        //   this.printReport();
-        // }
-        // this.cartService.closeRegister(() => {
-        //   this.toastService.show('Register Closed successfully.');
-        // })
-    }
   }
 
   async getReportbyCategories() {
