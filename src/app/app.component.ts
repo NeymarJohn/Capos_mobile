@@ -5,6 +5,7 @@ import { UtilService } from './_services/util.service';
 import { StorePolicy }      from 'src/app/_classes/store_policy.class';
 import { Platform } from '@ionic/angular';
 import { BackgroundMode } from '@awesome-cordova-plugins/background-mode/ngx';
+import { OpenRegisterService } from 'src/app/_services/open-register.service';
 import { OpenRegisterPage } from 'src/app/pages/main/sell/open-register/open-register.page';
 
 @Component({
@@ -27,7 +28,8 @@ export class AppComponent {
     public store_policy: StorePolicy,
     public open_register: OpenRegisterPage,
     private authService: AuthService,
-    private utilService: UtilService,    
+    private utilService: UtilService,
+    public openRegisterService: OpenRegisterService, 
     private backgroundMode: BackgroundMode,
     private plt: Platform,
   ) {    
@@ -98,9 +100,9 @@ export class AppComponent {
       let current_hour = now_date.getHours();
       let current_minute = now_date.getMinutes();
       console.log(current_hour + ":" + current_minute);
-      if(current_hour === 4 && current_minute === 0){
-        console.log(current_hour);
-        this.open_register.closeRegister();
+      if(current_hour === 6 && current_minute === 11){
+        console.log('Closed register on the background mode')
+        this.open_register.closeRegister(false);
       }
     }
   }
