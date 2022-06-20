@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators }                 from '@angular/for
 
 import { ActionSheetController, NavController, Platform, PopoverController }    from '@ionic/angular';
 import { AutoCompleteOptions, AutoCompleteComponent }                           from 'ionic4-auto-complete';
-import { BarcodeScanner } from "@ionic-native/barcode-scanner/ngx";
+// import { BarcodeScanner } from "@ionic-native/barcode-scanner/ngx";
 
 import { ChooseCustomerComponent }      from 'src/app/components/choose-customer/choose-customer.component';
 import { ConfirmPasswordComponent }     from 'src/app/components/confirm-password/confirm-password.component';
@@ -242,7 +242,7 @@ export class SellPage implements OnInit {
     private nav: NavController,
     private fb: FormBuilder,
     private print: PrintService,
-    private barcodeScanner: BarcodeScanner,
+    // private barcodeScanner: BarcodeScanner,
 
   ) {
     this.authService.currentUser.subscribe(user => {
@@ -1963,18 +1963,18 @@ export class SellPage implements OnInit {
   }
 
   generateBarcode() {
-    console.log('generate barcode...');
-    const date = new Date(Date.now());
-    let value = date.getTime();
-    // value = this.cart.sale_number;
-    // value = date.getFullYear() + (date.getMonth() + 1) + date.getDate() + date.getHours() + date.getMinutes() + date.getSeconds();
+    // console.log('generate barcode...');
+    // const date = new Date(Date.now());
+    // let value = date.getTime();
+    // // value = this.cart.sale_number;
+    // // value = date.getFullYear() + (date.getMonth() + 1) + date.getDate() + date.getHours() + date.getMinutes() + date.getSeconds();
 
-    this.barcodeScanner.encode(this.barcodeScanner.Encode.TEXT_TYPE, value).then(data => {
-      console.log('barcode value : ', data);
-      this.barcode_value = data;
-    }).catch(err => {
-      console.log('Error : ', err);
-    })
+    // this.barcodeScanner.encode(this.barcodeScanner.Encode.TEXT_TYPE, value).then(data => {
+    //   console.log('barcode value : ', data);
+    //   this.barcode_value = data;
+    // }).catch(err => {
+    //   console.log('Error : ', err);
+    // })
   }
 
   invoicePrintConfirm() {

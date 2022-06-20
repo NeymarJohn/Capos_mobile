@@ -22,6 +22,9 @@ export class OpenRegisterService {
  	tableData: any = [];
  	categories:Producttype[] = [];
  	allData:any = [];
+  outlet:any = [];
+  salestax:any = [];
+
 
  	printers: any[] = [];
 
@@ -47,6 +50,8 @@ export class OpenRegisterService {
 
 	init() {
 		this.tableData = [];
+		this.loadOutlet();
+    this.loadSalesTax();
 		this.loadCategories();
 		this.loadStorePolicy();
 	}
@@ -64,6 +69,9 @@ export class OpenRegisterService {
 		filter.touch = true;
 		if(this.cigaretteSummaryStatus){
 			filter.cigarette = false;
+		}
+		if(this.notRevenueStatus) {
+			// filter.revenue = false;
 		}
 		this.utilService.get('product/type', filter).subscribe(result => {
 		  if(result && result.body) {
@@ -87,6 +95,28 @@ export class OpenRegisterService {
 		});
 	}
 
+	loadOutlet() {
+    this.outlet = [];
+    this.utilService.get('sell/outlet').subscribe(result => {
+      if(result) {
+        for(let l of result.body) {
+          this.outlet.push(l);
+        }
+      }
+    })
+  }
+
+  loadSalesTax() {
+    this.salestax = [];
+    this.utilService.get('sale/salestax').subscribe(result => {
+      if(result && result.body) {
+        for(let s of result.body) {
+          this.salestax.push(s);
+        }
+      }
+    })
+  }
+
 	public get openClose():Openclose {
 		return this.cartService.openClose;
 	}
@@ -98,10 +128,9 @@ export class OpenRegisterService {
 	public closeRegister() {
 		if(this.cartService.openClose._id) {
 	      this.cartService.getOpenClose();
-		  this.cartService.closeRegister();
-		  this.printReport();
+				this.cartService.closeRegister();
+				this.printReport();
 	    }
-		// this.printData();
 	}
 
 	public getTableData(callback?:Function):any {
@@ -143,10 +172,19 @@ export class OpenRegisterService {
 	        for(let c of this.categories) {
 		      let cData = this.allData.filter(item => item.product_id.type == c._id);
 		      if (cData.length > 0) {
-		        console.log(cData[0]);
 		        let totalQty = cData.reduce((a, b)=>a + b.qty, 0);
-		        let price = cData[0].price;
-		        let totalPrice = totalQty * price;
+		        
+		        let tax_rate = 0;            
+            let lData = this.outlet.filter(item => item._id == cData[0].product_id.outlet);
+            if(lData.length > 0) {
+              let sData = this.salestax.filter(item => item._id == lData[0].defaultTax._id);
+              if(sData.length > 0) {
+                tax_rate = sData[0].rate;
+              }
+            }
+
+		        let price = cData[0].price + (cData[0].price * tax_rate / 100);
+            let totalPrice = totalQty * price;
 		        let data = {
 		          name: c.data.name,
 		          sale_qty: totalQty,
@@ -224,7 +262,7 @@ export class OpenRegisterService {
 		receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
 		receipt += Commands.HORIZONTAL_LINE.HR_58MM;
 
-		console.log(receipt);
+		// console.log(receipt);
 		this.print.sendToBluetoothPrinter(printMac, receipt);
 	}
 
@@ -282,12 +320,12 @@ export class OpenRegisterService {
 	    });
 	    template += `</div>`;
 
-	    console.log("test:", template);
+	    // console.log("test:", template);
 
 	    Object.assign(data, {email, template: template});
 
 	    this.utilService.post('sell/email', data).subscribe(result => {
-	      console.log(result);
+	      // console.log(result);
 	      //  this.cart.save(() => {
 	      //   this._completeSale();
 	      // });
