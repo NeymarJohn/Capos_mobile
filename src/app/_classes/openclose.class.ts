@@ -22,7 +22,7 @@ export class Openclose{
     private_web_address: string = '';
     register: any;
     outlet: any;
-    opening_time: string = '';	
+    opening_time: string = '';
     closing_time: string = '';
     open_value: number = 0;
     open_note: string = '';
@@ -37,7 +37,7 @@ export class Openclose{
 
     util = UtilFunc;
     user:any;
-    store_info: any;    
+    store_info: any;
     cash_movements:ICashMmovement[] = [];
     all_payments:Cart[] = [];
     all_returns:Cart[] = [];
@@ -45,12 +45,12 @@ export class Openclose{
     main_outlet: any;
 
     constructor(private authService: AuthService, private utilService: UtilService) {
-        this.authService.currentUser.subscribe(user => {        
-            this.user = user;                    
-        });       
-		this.utilService.get('auth/store', {}).subscribe(result => {    			
-            this.store_info = result.body;      
-        });  
+        this.authService.currentUser.subscribe(user => {
+            this.user = user;
+        });
+		this.utilService.get('auth/store', {}).subscribe(result => {
+            this.store_info = result.body;
+        });
 
         this.utilService.get('sell/outlet', {is_main: true}).subscribe(result => {
             if(result && result.body) {
@@ -68,7 +68,7 @@ export class Openclose{
         this.private_web_address = '';
         this.register = null;
         this.outlet = null;
-        this.opening_time = '';	
+        this.opening_time = '';
         this.closing_time = '';
         this.open_value = 0;
         this.open_note = '';
@@ -88,7 +88,7 @@ export class Openclose{
 
     loadCurrent(success?:Function, noexist?:Function) {
         const query = {
-            private_web_address: this.user? this.user.private_web_address: null, 
+            private_web_address: this.user? this.user.private_web_address: null,
             outlet: (this.user && this.user.outlet) ? this.user.outlet._id : this.main_outlet._id,
             register: this.user?this.user.outlet.register[0]:null,
             status: 1
@@ -96,8 +96,8 @@ export class Openclose{
         if(!this.user || !this.user.outlet) delete query.outlet;
         this.init();
         this.utilService.get('sell/openclose', query).subscribe(result => {
-            if(result && result.body && result.body.length>0) {                
-                this.loadDetails(result.body[0]);                                
+            if(result && result.body && result.body.length>0) {
+                this.loadDetails(result.body[0]);
                 success(this);
             } else {
                 if(noexist) noexist();
@@ -107,11 +107,11 @@ export class Openclose{
         })
     }
 
-    loadById(_id:string, success?:Function, noexist?:Function) {        
+    loadById(_id:string, success?:Function, noexist?:Function) {
         this.init();
         this.utilService.get('sell/openclose?_id=' + _id).subscribe(result => {
-            if(result && result.body) {                
-                this.loadDetails(result.body);                                
+            if(result && result.body) {
+                this.loadDetails(result.body);
                 success(this);
             } else {
                 if(noexist) noexist();
@@ -146,7 +146,7 @@ export class Openclose{
         this.close_note = details.close_note;
         this.counted = details.counted;
         this.status = details.status;
-        if(details.payment_data) {                 
+        if(details.payment_data) {
             this.loadAllPayments(details.payment_data.all_payments);
             this.loadAllCashMovements(details.payment_data.cash_movements);
             this.loadAllReturns(details.payment_data.all_returns);
@@ -155,7 +155,7 @@ export class Openclose{
     }
 
     public get data():any {
-        return {            
+        return {
             open_value: this.open_value,
             open_note: this.open_note,
             close_note: this.close_note,
@@ -164,10 +164,10 @@ export class Openclose{
         }
     }
 
-    save(success?:Function, error?:Function) {                
-		const data = this.data; 
+    save(success?:Function, error?:Function) {
+		const data = this.data;
 		if(this._id) {
-			data._id = this._id;    
+			data._id = this._id;
 		} else {
 			delete data._id;
             data.user_id = this.user._id;
@@ -178,12 +178,12 @@ export class Openclose{
         if(data.status == 2) {
             data.closing_time = Date.now();
         }
-        this.utilService.post('sell/openclose', data).subscribe(result => {	
-			this.loadDetails(result.body)
-            if(success) success(this);
+        this.utilService.post('sell/openclose', data).subscribe(result => {
+			    this.loadDetails(result.body);
+          if(success) success(this);
         }, err => {
             if(error) error(this);
-        })   
+        })
     }
 
     loadAllCashMovements(cash_movements:any) {
@@ -193,7 +193,7 @@ export class Openclose{
             user: this.user.first_name + ' ' + this.user.last_name,
             amount: this.open_value.toFixed(2),
             reason: 'Opening Float'
-        })          
+        })
         for(let c of cash_movements) {
             let amount = c.transaction;
             if(c.is_credit == 0) amount *= -1;
@@ -208,28 +208,28 @@ export class Openclose{
         }
     }
 
-    loadAllPayments(all_payments) {                
+    loadAllPayments(all_payments) {
         for(let s of all_payments) {
             let cart = new Cart(this.authService, this.utilService);
             cart.loadByCart(s);
-            this.all_payments.push(cart);                    
-        }                
+            this.all_payments.push(cart);
+        }
     }
 
-    loadAllReturns(all_returns) {        
+    loadAllReturns(all_returns) {
         for(let s of all_returns) {
             let cart = new Cart(this.authService, this.utilService);
             cart.loadByCart(s);
-            this.all_returns.push(cart);                    
-        }                
+            this.all_returns.push(cart);
+        }
     }
 
-    loadAllVoided(all_voided) {        
+    loadAllVoided(all_voided) {
         for(let s of all_voided) {
             let cart = new Cart(this.authService, this.utilService);
             cart.loadByCart(s);
-            this.all_voided.push(cart);                    
-        }                
+            this.all_voided.push(cart);
+        }
     }
 
     public get receivedCash():string {
@@ -239,8 +239,8 @@ export class Openclose{
 
     public get receivedCreditCard():string {
         let sum = this.all_payments.reduce((a, b)=>a + b.getReceivedPayments('credit'), 0);
-        for(let p of this.all_payments) {            
-            if(p.sale_status == 'on_account') {                
+        for(let p of this.all_payments) {
+            if(p.sale_status == 'on_account') {
                 sum += p.tax + parseFloat(p.totalExcl);
             }
         }
@@ -293,7 +293,7 @@ export class Openclose{
     }
 
     public get totalExpected():string {
-        let sum = parseFloat(this.expectedCash) + parseFloat(this.receivedCreditCard) + parseFloat(this.receivedMasterCard) +  parseFloat(this.receivedDebitCard) 
+        let sum = parseFloat(this.expectedCash) + parseFloat(this.receivedCreditCard) + parseFloat(this.receivedMasterCard) +  parseFloat(this.receivedDebitCard)
                 + parseFloat(this.receivedStoreCredit) + parseFloat(this.totalReturns) + parseFloat(this.totalVoided);
         return sum.toFixed(2)
     }
@@ -305,7 +305,7 @@ export class Openclose{
     }
 
     public get totalDiff():string {
-        let sum = parseFloat(this.diffCash) + parseFloat(this.diffCreditCard) + 
+        let sum = parseFloat(this.diffCash) + parseFloat(this.diffCreditCard) +
                 parseFloat(this.diffMasterCard) + parseFloat(this.diffDebitCard);
         return sum.toFixed(2)
     }
@@ -315,7 +315,7 @@ export class Openclose{
         return sum.toFixed(2);
     }
 
-    public get totalVoided():string {        
+    public get totalVoided():string {
         let sum = -1 * this.all_voided.reduce((a, b)=> a + (b.voided?(b.tax + parseFloat(b.totalExcl)):b.voidedAmount), 0);
         return sum.toFixed(2);
     }

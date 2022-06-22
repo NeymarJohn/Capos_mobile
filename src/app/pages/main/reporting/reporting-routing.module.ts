@@ -13,28 +13,28 @@ const routes: Routes = [
   },
   {
     path: 'sales',
-    component: SalesReportsPage,    
+    component: SalesReportsPage
   },
   {
     path: 'inventory',
-    component: InventoryReportsPage    
+    component: InventoryReportsPage
   },
   {
     path: 'payment',
-    component: PaymentReportsPage,    
+    component: PaymentReportsPage
   },
   {
     path: 'closures',
-    component: RegisterClosuresPage,    
-  },  
+    component: RegisterClosuresPage
+  },
   {
     path: 'store-credit',
-    component: StoreCreditReportsPage,    
+    component: StoreCreditReportsPage
   }
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
+  exports: [RouterModule]
 })
 export class ReportingPageRoutingModule {}

@@ -6,7 +6,7 @@ import { PopoverController } from '@ionic/angular';
 import { SearchSalesReportComponent } from 'src/app/components/search-sales-report/search-sales-report.component';
 
 interface IData{
-  date: string,  
+  date: string,
   total: number,
   revenue: number,
   cost_of_goods: number,
@@ -28,7 +28,7 @@ export class SalesReportsPage implements OnInit {
   allData:any = [];
   tableData:IData[] = [];
   dates = [];
-  loading: boolean = false;  
+  loading: boolean = false;
 
   filter = {
     outlet: '',
@@ -38,6 +38,7 @@ export class SalesReportsPage implements OnInit {
     sort_field: 'date',
     sort_order: 'desc'
   }
+  summary:any[];
   rows:any[];
   all_columns:any[] = [
     {prop: 'date', name: 'Date', sortable: true, checked: true},
@@ -55,28 +56,28 @@ export class SalesReportsPage implements OnInit {
     private utilService: UtilService,
     private popoverController: PopoverController
   ) {
-    this.authService.checkPremission('sales_report');        
+    this.authService.checkPremission('sales_report');
   }
 
   ngOnInit() {
-    this.authService.currentUser.subscribe(user => {        
-      this.user = user; 
+    this.authService.currentUser.subscribe(user => {
+      this.user = user;
       if(user.role && user.role.name != 'Admin') {
         this.only_own_sales = user.role.permissions.includes('only_own_sales');
       }
       this.search();
-    });    
+    });
   }
 
-  search(){    
+  search(){
     if(this.user.outlet) this.filter.outlet = this.user.outlet._id;
     if(this.only_own_sales) {
       this.filter.user_id = this.user._id;
     }
     this.loading = true;
-    if(this.allData.length == 0) {      
-      this.utilService.get('sale/sale', this.filter).subscribe(result => {            
-        this.rows = []; 
+    if(this.allData.length == 0) {
+      this.utilService.get('sale/sale', this.filter).subscribe(result => {
+        this.rows = [];
         if(result && result.body) {
           for(let s of result.body) {
             s.date = this.util.handleDate(s.created_at);
@@ -84,12 +85,12 @@ export class SalesReportsPage implements OnInit {
             if(index==-1) this.dates.push(s.date);
             this.allData.push(s);
           }
-          this.getTableData();          
-        }              
+          this.getTableData();
+        }
       })
     } else {
       this.getTableData();
-    }    
+    }
   }
 
   getTableData() {
@@ -113,7 +114,7 @@ export class SalesReportsPage implements OnInit {
           if(p.variant_id !== '') {
             let v_index = p.product_id.variant_products.findIndex(item => item._id == p.variant_id);
             if(v_index > -1) {
-              cog += p.product_id.variant_products[v_index].supply_price * p.qty;              
+              cog += p.product_id.variant_products[v_index].supply_price * p.qty;
             }
           } else {
             cog += p.product_id.supply_price * p.qty;
@@ -130,10 +131,11 @@ export class SalesReportsPage implements OnInit {
         margin: (cog!=0)?(revenue - cog)/cog * 100 : 0,
         tax: tax
       }
-      this.tableData.push(data);      
+      this.tableData.push(data);
     }
     this._onSort();
     this.getRowData();
+    this.loadSummary();
     this.loading = false;
   }
 
@@ -155,18 +157,18 @@ export class SalesReportsPage implements OnInit {
   _onSort() {
     let prop = this.filter.sort_field;
     let dir = this.filter.sort_order;
-    const tableData = [...this.tableData];      
+    const tableData = [...this.tableData];
     tableData.sort((a, b)=> {
       if(prop == 'date') {
         return UtilFunc.compareDate(a.date, b.date) * (dir === 'desc' ? -1 : 1);
       } else {
         return (a[prop] - b[prop]) * (dir === 'desc' ? -1 : 1);
-      }        
+      }
     })
     this.tableData = tableData;
   }
 
-  onSort(sort:any) {    
+  onSort(sort:any) {
     this.loading = true;
     this.filter.sort_field = sort.prop;
     this.filter.sort_order = sort.dir;
@@ -177,17 +179,17 @@ export class SalesReportsPage implements OnInit {
     }, 200);
   }
 
-  async openSearch() {    
+  async openSearch() {
     const popover = await this.popoverController.create({
       component: SearchSalesReportComponent,
       // event: ev,
-      cssClass: 'popover_custom',      
+      cssClass: 'popover_custom',
       translucent: true,
       componentProps: {filter: this.filter}
     });
 
-    popover.onDidDismiss().then(result => {      
-      if(typeof result.data != 'undefined') {        
+    popover.onDidDismiss().then(result => {
+      if(typeof result.data != 'undefined') {
         let data = result.data;
         if(data.process && data.filter) {
           for(let key in data.filter) {
@@ -198,7 +200,7 @@ export class SalesReportsPage implements OnInit {
       }
     });
 
-    await popover.present(); 
+    await popover.present();
   }
 
   public get totalTotal(){
@@ -221,11 +223,11 @@ export class SalesReportsPage implements OnInit {
     return this.util.getPriceWithCurrency(sum);
   }
 
-  public get totalMargin(){    
+  public get totalMargin(){
     let sum = 0;
     let total_revenue = this.tableData.reduce((a, b)=>a + b.revenue, 0);
     let total_costs = this.tableData.reduce((a, b)=>a + b.cost_of_goods, 0);
-    if(total_costs>0) sum = (total_revenue - total_costs) / total_costs * 100;    
+    if(total_costs>0) sum = (total_revenue - total_costs) / total_costs * 100;
     return sum.toFixed(2) + '%';
   }
 
@@ -234,8 +236,19 @@ export class SalesReportsPage implements OnInit {
     return this.util.getPriceWithCurrency(sum);
   }
 
-  public get summary():any[] {
+  public get _summary():any[] {
     return [
+      // {label: 'Total(Incl.Tax)', value: this.totalTotal},
+      // {label: 'Revenue', value: this.totalRevenue},
+      // {label: 'Cost of Goods', value: this.totalCost},
+      // {label: 'Gross Profit', value: this.totalProfit},
+      // {label: 'Margin(%)', value: this.totalMargin},
+      // {label: 'Tax', value: this.totalTax},
+    ];
+  }
+
+  loadSummary() {
+    this.summary = [
       {label: 'Total(Incl.Tax)', value: this.totalTotal},
       {label: 'Revenue', value: this.totalRevenue},
       {label: 'Cost of Goods', value: this.totalCost},

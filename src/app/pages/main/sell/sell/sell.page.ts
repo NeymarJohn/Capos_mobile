@@ -1,30 +1,150 @@
-import { Component, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActionSheetController, NavController, Platform, PopoverController } from '@ionic/angular';
-import { AutoCompleteOptions, AutoCompleteComponent } from 'ionic4-auto-complete';
-import { ChooseCustomerComponent } from 'src/app/components/choose-customer/choose-customer.component';
-import { ConfirmPasswordComponent } from 'src/app/components/confirm-password/confirm-password.component';
-import { DiscountComponent } from 'src/app/components/discount/discount.component';
-import { PayAmountComponent } from 'src/app/components/pay-amount/pay-amount.component';
-import { PayChangeComponent } from 'src/app/components/pay-change/pay-change.component';
-import { QuantityComponent } from 'src/app/components/quantity/quantity.component';
-import { SaleNoteComponent } from 'src/app/components/sale-note/sale-note.component';
-import { UnfulfilledSaleComponent } from 'src/app/components/unfulfilled-sale/unfulfilled-sale.component';
-import { Cart } from 'src/app/_classes/cart.class';
-import { CartProduct } from 'src/app/_classes/cart_product.class';
-import { Openclose } from 'src/app/_classes/openclose.class';
-import { Payment } from 'src/app/_classes/payment.class';
-import { Product } from 'src/app/_classes/product.class';
-import { Constants } from 'src/app/_configs/constants';
-import { AlertService } from 'src/app/_services/alert.service';
-import { AuthService } from 'src/app/_services/auth.service';
-import { CartService } from 'src/app/_services/cart.service';
-import { LoadingService } from 'src/app/_services/loading.service';
+import { Component, OnInit, ViewEncapsulation, ViewChild }    from '@angular/core';
+
+import { FormBuilder, FormGroup, Validators }                 from '@angular/forms';
+
+import { ActionSheetController, NavController, Platform, PopoverController }    from '@ionic/angular';
+import { AutoCompleteOptions, AutoCompleteComponent }                           from 'ionic4-auto-complete';
+// import { BarcodeScanner } from "@ionic-native/barcode-scanner/ngx";
+
+import { ChooseCustomerComponent }      from 'src/app/components/choose-customer/choose-customer.component';
+import { ConfirmPasswordComponent }     from 'src/app/components/confirm-password/confirm-password.component';
+import { DiscountComponent }            from 'src/app/components/discount/discount.component';
+import { PayAmountComponent }           from 'src/app/components/pay-amount/pay-amount.component';
+import { PayChangeComponent }           from 'src/app/components/pay-change/pay-change.component';
+import { QuantityComponent }            from 'src/app/components/quantity/quantity.component';
+import { SaleNoteComponent }            from 'src/app/components/sale-note/sale-note.component';
+import { DrawerNoteComponent }          from 'src/app/components/drawer-note/drawer-note.component';
+import { UnfulfilledSaleComponent }     from 'src/app/components/unfulfilled-sale/unfulfilled-sale.component';
+
+import { Cart }             from 'src/app/_classes/cart.class';
+import { CartProduct }      from 'src/app/_classes/cart_product.class';
+import { Openclose }        from 'src/app/_classes/openclose.class';
+import { Payment }          from 'src/app/_classes/payment.class';
+import { Product }          from 'src/app/_classes/product.class';
+import { StorePolicy }      from 'src/app/_classes/store_policy.class';
+
+import { AlertService }         from 'src/app/_services/alert.service';
+import { AuthService }          from 'src/app/_services/auth.service';
+import { CartService }          from 'src/app/_services/cart.service';
+import { LoadingService }       from 'src/app/_services/loading.service';
 import { SearchProductService } from 'src/app/_services/search-product.service';
-import { ToastService } from 'src/app/_services/toast.service';
-import { UtilService } from 'src/app/_services/util.service';
+import { ToastService }         from 'src/app/_services/toast.service';
+import { UtilService }          from 'src/app/_services/util.service';
+import { PrintService }         from 'src/app/services/print.service';
+
 import * as UtilFunc from 'src/app/_helpers/util.helper';
-import { PrintService } from 'src/app/services/print.service';
+import { Constants } from 'src/app/_configs/constants';
+
+import { SaleDetailComponent } from 'src/app/components/sale-detail/sale-detail.component';
+import { EditCashComponent } from 'src/app/components/edit-cash/edit-cash.component';
+import { async } from 'q';
+
+// import { OpenRegisterPage } from 'src/app/pages/main/sell/open-register/open-register.page';
+
+const commands = {
+  LF: '\x0a',
+  ESC: '\x1b',
+  FS: '\x1c',
+  GS: '\x1d',
+  US: '\x1f',
+  FF: '\x0c',
+  DLE: '\x10',
+  DC1: '\x11',
+  DC4: '\x14',
+  EOT: '\x04',
+  NUL: '\x00',
+  EOL: '\n',
+  HORIZONTAL_LINE: {
+    HR_58MM: '================================',
+    HR2_58MM: '********************************'
+  },
+  FEED_CONTROL_SEQUENCES: {
+    CTL_LF: '\x0a', // Print and line feed
+    CTL_FF: '\x0c', // Form feed
+    CTL_CR: '\x0d', // Carriage return
+    CTL_HT: '\x09', // Horizontal tab
+    CTL_VT: '\x0b', // Vertical tab
+  },
+  LINE_SPACING: {
+    LS_DEFAULT: '\x1b\x32',
+    LS_SET: '\x1b\x33'
+  },
+  HARDWARE: {
+    HW_INIT: '\x1b\x40', // Clear data in buffer and reset modes
+    HW_SELECT: '\x1b\x3d\x01', // Printer select
+    HW_RESET: '\x1b\x3f\x0a\x00', // Reset printer hardware
+  },
+  CASH_DRAWER: {
+    CD_KICK_2: '\x1b\x70\x00\x32\xFA', // Sends a pulse to pin 2 []
+    CD_KICK_5: '\x1b\x70\x01\x32\xFA', // Sends a pulse to pin 5 []
+  },
+  MARGINS: {
+    BOTTOM: '\x1b\x4f', // Fix bottom size
+    LEFT: '\x1b\x6c', // Fix left size
+    RIGHT: '\x1b\x51', // Fix right size
+  },
+  PAPER: {
+    PAPER_FULL_CUT: '\x1d\x56\x00', // Full cut paper
+    PAPER_PART_CUT: '\x1d\x56\x01', // Partial cut paper
+    PAPER_CUT_A: '\x1d\x56\x41', // Partial cut paper
+    PAPER_CUT_B: '\x1d\x56\x42', // Partial cut paper
+  },
+  TEXT_FORMAT: {
+    TXT_NORMAL: '\x1b\x21\x00', // Normal text
+    TXT_2HEIGHT: '\x1b\x21\x10', // Double height text
+    TXT_2WIDTH: '\x1b\x21\x20', // Double width text
+    TXT_4SQUARE: '\x1b\x21\x30', // Double width & height text
+    TXT_CUSTOM_SIZE: function (width, height) { // other sizes
+      var widthDec = (width - 1) * 16;
+      var heightDec = height - 1;
+      var sizeDec = widthDec + heightDec;
+      return '\x1d\x21' + String.fromCharCode(sizeDec);
+    },
+
+    TXT_HEIGHT: {
+      1: '\x00',
+      2: '\x01',
+      3: '\x02',
+      4: '\x03',
+      5: '\x04',
+      6: '\x05',
+      7: '\x06',
+      8: '\x07'
+    },
+    TXT_WIDTH: {
+      1: '\x00',
+      2: '\x10',
+      3: '\x20',
+      4: '\x30',
+      5: '\x40',
+      6: '\x50',
+      7: '\x60',
+      8: '\x70'
+    },
+
+    TXT_UNDERL_OFF: '\x1b\x2d\x00', // Underline font OFF
+    TXT_UNDERL_ON: '\x1b\x2d\x01', // Underline font 1-dot ON
+    TXT_UNDERL2_ON: '\x1b\x2d\x02', // Underline font 2-dot ON
+    TXT_BOLD_OFF: '\x1b\x45\x00', // Bold font OFF
+    TXT_BOLD_ON: '\x1b\x45\x01', // Bold font ON
+    TXT_ITALIC_OFF: '\x1b\x35', // Italic font ON
+    TXT_ITALIC_ON: '\x1b\x34', // Italic font ON
+    TXT_FONT_A: '\x1b\x4d\x00', // Font type A
+    TXT_FONT_B: '\x1b\x4d\x01', // Font type B
+    TXT_FONT_C: '\x1b\x4d\x02', // Font type C
+    TXT_ALIGN_LT: '\x1b\x61\x00', // Left justification
+    TXT_ALIGN_CT: '\x1b\x61\x01', // Centering
+    TXT_ALIGN_RT: '\x1b\x61\x02', // Right justification
+  },
+
+  BARCODE_PRINT: {
+    GS: '\x1d',
+    H: '\x68',
+    W: '\x77',
+    K: '\x6b',
+    END: '\x00'
+  }
+}
 
 @Component({
   selector: 'app-sell',
@@ -35,6 +155,7 @@ import { PrintService } from 'src/app/services/print.service';
 export class SellPage implements OnInit {
   title: string = 'Sell Panel';
   user: any;
+  main_outlet: any;
   keyword: string = '';
   optionAutoComplete: AutoCompleteOptions;
   products: Product[] = [];
@@ -47,12 +168,79 @@ export class SellPage implements OnInit {
   passed_password: boolean = false;
   allow_discount: boolean = false;
   @ViewChild('searchbar') searchbar: AutoCompleteComponent;
+  // added by yosri
+  allow_void_sales: boolean = false;
+  allow_print_label: boolean = false;
+
+  last_sale: Cart = null;
+  change: any = 0;
+
+  printers: any[] = [];
+
+  // barcode
+  barcode_value: string = '';
+
+  /// receiptPrintTemplate
+  header1: String = "";
+  header1Status: Boolean = false;
+  header2: String = "";
+  header2Status: Boolean = false;
+  header3: String = "";
+  header3Status: Boolean = false;
+  header4: String = "";
+  header4Status: Boolean = false;
+  header5: String = "";
+  header5Status: Boolean = false;
+  policy1: String = "";
+  policy1Status: Boolean = false;
+  policy2: String = "";
+  policy2Status: Boolean = false;
+  policy3: String = "";
+  policy3Status: Boolean = false;
+  policy4: String = "";
+  policy4Status: Boolean = false;
+  policy5: String = "";
+  policy5Status: Boolean = false;
+  marketing1: String = "";
+  marketing1Status: Boolean = false;
+  marketing2: String = "";
+  marketing2Status: Boolean = false;
+  marketing3: String = "";
+  marketing3Status: Boolean = false;
+  marketing4: String = "";
+  marketing4Status: Boolean = false;
+  marketing5: String = "";
+  marketing5Status: Boolean = false;
+  ticketPolicy: String = "";
+  ticketPolicyStatus: Boolean = false;
+  pole1: String = "";
+  pole2: String = "";
+
+  // store policy
+  receiptPrintedStatus: Boolean = false;
+  storeCopyStatus: Boolean = false;
+  printBarcodeStatus: Boolean = false;
+  printBarcodeNumberStatus: Boolean = false;
+  dontPrintCustomerStatus: Boolean = false;
+  descriptionStatus: Boolean = false;
+  storeLogoStatus: Boolean = false;
+  smallSizePrintStatus: Boolean = false;
+  invoicePrintingStatus: Boolean = false;
+  printProductBarcodeStatus: Boolean = false;
+  printBillStatus: Boolean = false;
+  emailReceiptStatus: Boolean =false;
+
+  // fast discount
+  fast_discount: String = "0";
 
   constructor(
+    public providerProduct: SearchProductService,
+    public payment: Payment,
+    public store_policy: StorePolicy,
+    // public open_register: OpenRegisterPage,
     private platform: Platform,
     private popoverController: PopoverController,
     private actionSheetController: ActionSheetController,
-    public providerProduct: SearchProductService,
     private loading: LoadingService,
     private authService: AuthService,
     private cartService: CartService,
@@ -61,16 +249,23 @@ export class SellPage implements OnInit {
     private utilService: UtilService,
     private nav: NavController,
     private fb: FormBuilder,
-    public payment: Payment,
     private print: PrintService,
-    
+    // private barcodeScanner: BarcodeScanner,
   ) {
     this.authService.currentUser.subscribe(user => {
       this.user = user;
       if (user.role) {
+        this.allow_print_label = user.role.permissions.includes('print_labels');
         this.allow_discount = user.role.permissions.includes('apply_discounts');
+        this.allow_void_sales = user.role.permissions.includes('void_sales');
       }
-    })
+    });
+    this.utilService.get('sell/outlet', {is_main: true}).subscribe(result => {
+      if(result && result.body) {
+        this.main_outlet = result.body[0];
+      }
+    });
+
     this.optionAutoComplete = new AutoCompleteOptions();
     this.optionAutoComplete.autocomplete = 'on';
     this.optionAutoComplete.debounce = 750;
@@ -79,15 +274,23 @@ export class SellPage implements OnInit {
     this.form = this.fb.group({
       open_value: ['', [Validators.required, Validators.min(1)]],
       open_note: ['']
-    })
+    });
+
     this.payment.load();
+    // this.store_policy.load();
+    this.addPrinterList();
   }
 
   ngOnInit() {
     this.platform.ready().then(() => {
       let width = this.platform.width();
       this.is_mobile = width <= 576;
-    })
+    });
+    this.getReceiptTemplate();
+    this.getStorePolicy();
+    this.getFastDiscount();
+    this.loadLastSale();
+    this.generateBarcode();
   }
 
   ionViewDidEnter() {
@@ -114,7 +317,10 @@ export class SellPage implements OnInit {
     if (this.cartService.openClose._id) {
       if (this.cartService.new_sale) {
         let action = this.cartService.action;
-        if (this.cart._id && !(this.cartService.new_sale.cart_mode == 'return' && this.cart.cart_mode == 'return' && this.cartService.new_sale.origin_sale_number == this.cart.origin_sale_number)) {
+        if (this.cart._id && !
+          (this.cartService.new_sale.cart_mode == 'return'
+            && this.cart.cart_mode == 'return'
+            && this.cartService.new_sale.origin_sale_number == this.cart.origin_sale_number)) {
           let title = 'Hold up! You currently have a sale in progress',
             msg = 'You have a sale on the Sell screen that hasn’t been completed. You can choose to return to that sale to complete it, or save that sale and continue with this one.';
           this.alertService.presentAlertConfirm(title, msg, () => {
@@ -155,10 +361,11 @@ export class SellPage implements OnInit {
         if (result && result.body) {
           const cart = result.body[0];
           if (cart.returned) {
-            this.toastService.show('Already reaturned sale.');
+            this.toastService.show('Already returned sale.');
             this.cartService.cart.init();
           } else {
-            if (!this.cart._id) this.cartService.cart.save();
+            // if (!this.cart._id) this.cartService.cart.save();
+            // this.cartService.cart.save();
           }
         } else {
           this.toastService.show('No existing original sale.');
@@ -196,6 +403,10 @@ export class SellPage implements OnInit {
     return this.cart.getProductsFromBundle(sel_cart_product);
   }
 
+  public get selected_cart_product_length() {
+    return this.cart.getSelectedBundleProducts().length;
+  }
+
   selCartProduct(product: CartProduct) {
     product.checked = !product.checked;
     this.deSelectOther(product);
@@ -214,12 +425,19 @@ export class SellPage implements OnInit {
 
   removeProductFromCart() {
     if (!this.selected_cart_product) return;
+    let cart_products_list: CartProduct[] = [];
+    cart_products_list = this.cart.getSelectedBundleProducts();
     if (this.cart.store_info.preferences.confirm_delete_product) {
       this.alertService.presentConfirmDelete('Item', () => {
-        this.cartService.removeProductFromCart(this.selected_cart_product);
+        cart_products_list.forEach(element => {
+          this.cartService.removeProductFromCart(this.cart.getProductsFromBundle(element));
+        });
       })
     } else {
-      this.cartService.removeProductFromCart(this.selected_cart_product);
+      cart_products_list.forEach(element => {
+        this.cartService.removeProductFromCart(this.cart.getProductsFromBundle(element));
+        // this.cartService.removeProductFromCart(this.selected_cart_product);
+      });
     }
   }
 
@@ -264,6 +482,9 @@ export class SellPage implements OnInit {
       case 'view_sales':
         return true;
         break;
+      case 'print_current':
+        if(!this.allow_print_label) return false;
+        break;
       case 'print_last_tran':
         if (!this.cartService.lastClose) return false;
         break;
@@ -295,35 +516,43 @@ export class SellPage implements OnInit {
           || this.selected_cart_product.product.data.has_no_price) return false;
         break;
       case 'cash':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'credit':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
+          return false;
+        break;
+      case 'visa':
+        if (this.cart.total_products == 0)
+          return false;
+        break;
+      case 'master':
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'debit':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'check':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'foodstamp':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'ebt_cash':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'gift':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'rewards':
-        if (!this.selected_cart_product)
+        if (this.cart.total_products == 0)
           return false;
         break;
       case 'charge_account':
@@ -339,11 +568,29 @@ export class SellPage implements OnInit {
           return false;
         break;
       case 'void_sale':
+        if (!this.allow_void_sales || this.cart.total_products == 0 || !this.selected_cart_product) return false;
+        else return true;
+        break;
       case 'return_items':
         if (['parked', 'new'].includes(this.cart.sale_status) || this.cart.voided_payments.length > 0) return false;
         break;
       case 'void_item':
         if (['parked', 'new'].includes(this.cart.sale_status) || !this.selected_cart_product) return false;
+        break;
+      case 'open_drawer_quick':
+        return true;
+        break;
+      case 'open_drawer':
+        return true;
+        break;
+      case 'fast_discount_item':
+        return true;
+        break;
+      case 'fast_discount_volume':
+        return true;
+        break;
+      case 'tax_exempt':
+        return true;
         break;
       default:
         return false;
@@ -353,7 +600,7 @@ export class SellPage implements OnInit {
 
   async openActionSheet(mode: string) {
     const headers = {
-      sales: 'Sale Actions', items: 'Item Actions', payment: 'Payment Actions'
+      sales: 'Sale Actions', items: 'Item Actions', payment: 'Payment Actions', print: 'Print Actions', drawer:'Open Drawer Actions', more: 'More Button Actions'
     };
     const buttons = {
       sales: [
@@ -377,7 +624,23 @@ export class SellPage implements OnInit {
         { text: 'Return Items', cssClass: 'danger', action: 'return_items' },
         { text: 'Cancel', icon: 'close', role: 'cancel' }
       ],
-      payment: []
+      payment: [],
+      print: [
+        { text: 'Print', cssClass: 'secondary', action: 'print_current' },
+        { text: 'Print last transaction', cssClass: 'secondary', action: 'print_last_tran' },
+        { text: 'Cancel', icon: 'close', role: 'cancel' }
+      ],
+      drawer: [
+        { text: 'Open Drawer', cssClass: 'secondary', action: 'open_drawer' },
+        { text: 'Open Drawer Quick', cssClass: 'secondary', action: 'open_drawer_quick' },
+        { text: 'Cancel', icon: 'close', role: 'cancel' }
+      ],
+      more: [
+        { text: 'Fast Discount (Item)', cssClass: 'secondary', action: 'fast_discount_item' },
+        { text: 'Fast Discount (Volume)', cssClass: 'secondary', action: 'fast_discount_volume' },
+        { text: 'Tax Exempt', cssClass: 'secondary', action: 'tax_exempt' },
+        { text: 'Cancel', icon: 'close', role: 'cancel' }
+      ]
     }
 
     for (let p of this.payment.payment_buttons) {
@@ -402,10 +665,10 @@ export class SellPage implements OnInit {
     }
     for (let b of buttons[mode]) {
       if (typeof b.action != 'undefined') {
-        let action = b.action
+        let action = b.action;
         let status = this.checkButtonStatus(action);
         if (!status) b.cssClass += ' disabled';
-        if (mode == 'sales' || mode == 'items') {
+        if (mode == 'sales' || mode == 'items' || mode == 'print' || mode == 'drawer' || mode == 'more') {
           b.handler = () => {
             this.doAction(action);
           }
@@ -471,6 +734,30 @@ export class SellPage implements OnInit {
         break;
       case 'return_items':
         this.returnItems();
+        break;
+      case 'void_sale':
+        this.voidSale();// added by yosri
+        break;
+      case 'print_current':
+        this.printSale();
+        break;
+      case 'print_last_tran':
+        this.printLastSale();
+        break;
+      case 'open_drawer_quick':
+        this.openDrawerQuick();
+        break;
+      case 'open_drawer':
+        this.openDrawer();
+        break;
+      case 'fast_discount_item':
+        this.fastDiscount(false);
+        break;
+      case 'fast_discount_volume':
+        this.fastDiscount(true);
+        break;
+      case 'tax_exempt':
+        this.taxExempt();
         break;
     }
     return true;
@@ -573,14 +860,40 @@ export class SellPage implements OnInit {
             this.cartService.cart.discount = data.discount;
             this.cartService.cart.setGlobalDiscount();
           } else {
-            let product: CartProduct = this.cart.products.find(item => item == this.selected_cart_product);
-            product.discount = data.discount;
+            let cart_products_list: CartProduct [] = [];
+            cart_products_list = this.cart.getSelectedBundleProducts();
+            cart_products_list.forEach(element => {
+              // let product: CartProduct = this.cart.products.find(item => item == element);
+              // product.discount = data.discount;
+              this.cart.getProductsFromBundle(element).discount = data.discount;
+              this.cartService.cart.save();
+            });
           }
           this.cartService.cart.save();
         }
       }
     });
     await popover.present();
+  }
+
+  fastDiscount(is_global: boolean) {
+    if (!this.selected_cart_product && !is_global) {
+      this.toastService.show('You must to select one or more item');
+      return;
+    }
+    let data = { mode: 'percent', value: Number(this.fast_discount)};
+
+    if (is_global) {  // fast discount volue
+      this.cartService.cart.discount = data;
+      this.cartService.cart.setGlobalDiscount();
+    } else { // fast discount item
+      let cart_products_list: CartProduct [] = [];
+      cart_products_list = this.cart.getSelectedBundleProducts();
+      cart_products_list.forEach(element => {
+        this.cart.getProductsFromBundle(element).discount = data;
+        this.cartService.cart.save();
+      });
+    }
   }
 
   async confirmPassword(callback?: Function) {
@@ -606,8 +919,17 @@ export class SellPage implements OnInit {
 
   exchangeMinus() {
     if (!this.selected_cart_product) return;
-    this.selected_cart_product.sign *= -1;
-    this.cartService.cart.save();
+    if (this.selected_cart_product_length > 1) {
+      let cart_products_list: CartProduct [] = [];
+      cart_products_list = this.cart.getSelectedBundleProducts();
+      cart_products_list.forEach(element => {
+        this.cart.getProductsFromBundle(element).sign *= -1;
+        this.cartService.cart.save();
+      });
+    } else {
+      this.selected_cart_product.sign *= -1;
+      this.cartService.cart.save();
+    }
   }
 
   async updateQuantity() {
@@ -624,8 +946,18 @@ export class SellPage implements OnInit {
       if (typeof result.data != 'undefined') {
         let data = result.data;
         if (data.process) {
-          this.selected_cart_product.qty = data.qty;
-          this.cartService.cart.save();
+          if (this.selected_cart_product_length > 1) {
+            let cart_products_list: CartProduct [] = [];
+            cart_products_list = this.cart.getSelectedBundleProducts();
+            cart_products_list.forEach(element => {
+              this.cart.getProductsFromBundle(element).qty = data.qty;
+              this.cartService.cart.save();
+            });
+
+          } else {
+            this.selected_cart_product.qty = data.qty;
+            this.cartService.cart.save();
+          }
         }
       }
     });
@@ -652,6 +984,9 @@ export class SellPage implements OnInit {
   parkSale() {
     this.openNote(Constants.message.sale_note.park, 'Park', () => {
       this.cartService.cart.sale_status = 'parked';
+      if(this.printBillStatus){
+        this.printSale();
+      }
       this.cartService.cart.save(() => {
         this.toastService.show(Constants.message.sale.parked);
         this.cartService.cart.delete(() => {
@@ -720,7 +1055,9 @@ export class SellPage implements OnInit {
           let data = result.data;
           if (data.process) {
             if (this.cart.isRefund && data.amount < 0 || !this.cart.isRefund && data.amount > 0) {
-              this.pay(pay_mode, data.amount);
+              const pay_amount = data.amount>=this.cart.total_to_pay?this.cart.total_to_pay:data.amount;
+              this.cart._change = data.amount - this.cart.total_to_pay > 0 ? data.amount - this.cart.total_to_pay : 0;
+              this.pay(pay_mode, pay_amount);
             }
           }
         }
@@ -807,20 +1144,619 @@ export class SellPage implements OnInit {
           }
         }
       }
-      this.completeSale()
+      this.completeSale();
     } else {
       this.cartService.cart.save();
     }
   }
 
   printSale() {
+    const printMac = this.printers[0]?.id;
+    const date = new Date(Date.now())
+    const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+    console.log(this.barcode_value);
+    let receipt = "";
+    receipt += commands.CASH_DRAWER.CD_KICK_2;
+    if (this.receiptPrintedStatus) {
+      receipt += commands.HARDWARE.HW_INIT;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.pole1;
+      receipt += commands.EOL;
+      receipt += this.pole2;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_2WIDTH;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.header1;
+      receipt += commands.EOL;
+      receipt += this.header2;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.header3;
+      receipt += commands.EOL;
+      receipt += this.header4;
+      receipt += commands.EOL;
+      receipt += this.header5;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_4SQUARE;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.cartService.cart.store_info.store_name;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += this.cartService.cart.store_info.physical_address.country.country_name + " " + this.cartService.cart.store_info.physical_address.city + " " + this.cartService.cart.store_info.physical_address.street;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += this.cartService.cart.store_info.phone;
+      // customer information print
+      if (!this.dontPrintCustomerStatus && this.cartService.cart.customer) {
+        receipt += commands.EOL;
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+        receipt += "Customer Info :";
+        receipt += this.cartService.cart.customer.username;
+      }
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += "Receipt ";
+      receipt += this.cartService.cart.sale_number;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += commands.EOL;
+      receipt += dateNow;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.HORIZONTAL_LINE.HR_58MM;
+      // receipt += commands.EOL;
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      this.cartService.cart.products.forEach((p) => {
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+        receipt += p.product_name;
+        // receipt += commands.EOL;
+        // product description print
+        if (this.descriptionStatus) {
+          receipt += commands.EOL;
+          receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+          receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+          receipt += p.product_description;
+        }
+        // product barcode print
+        if (this.printProductBarcodeStatus) {
+          receipt += commands.EOL;
+          receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+          receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+          receipt += "Barcode: ";
+          receipt += p.product_barcode;
+        }
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+        receipt += `${p.qty}     `;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+        receipt += p.discountedTotalWithoutGlobal_str;
+
+      })
+      receipt += commands.EOL;
+      receipt += commands.HORIZONTAL_LINE.HR_58MM;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Subtotal     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.cartService.cart.subTotal_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += `Discount${this.cartService.cart.discount_rate}     `;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.cartService.cart.discount_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += `Total Tax${this.cartService.cart.taxRate_str}     `;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.cartService.cart.taxAmount_str;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Sale Total     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.cartService.cart.totalIncl_str;
+      // receipt += commands.EOL;
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      // receipt += "Voided     ";
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      // receipt += this.cartService.cart.voidedAmount_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Change     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += UtilFunc.getPriceWithCurrency(this.cartService.cart.change);
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Balance     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += UtilFunc.getPriceWithCurrency(this.cartService.cart.total_to_pay);
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+
+      if (this.policy1Status && this.policy1) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy1;
+        receipt += commands.EOL;
+      }
+      if (this.policy2Status && this.policy2) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy2;
+        receipt += commands.EOL;
+      }
+      if (this.policy3Status && this.policy3) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy3;
+        receipt += commands.EOL;
+      }
+      if (this.policy4Status && this.policy4) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy4;
+        receipt += commands.EOL;
+      }
+      if (this.policy5Status && this.policy5) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy5;
+        receipt += commands.EOL;
+      }
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      if (this.ticketPolicyStatus) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.ticketPolicy;
+        receipt += commands.EOL;
+      }
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      if (this.marketing1Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing1;
+        receipt += commands.EOL;
+      }
+      if (this.marketing2Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing2;
+        receipt += commands.EOL;
+      }
+      if (this.marketing3Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing3;
+        receipt += commands.EOL;
+      }
+      if (this.marketing4Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing4;
+        receipt += commands.EOL;
+      }
+      if (this.marketing5Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing5;
+        receipt += commands.EOL;
+      }
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    }
+
+    receipt += commands.BARCODE_PRINT.GS + commands.BARCODE_PRINT.H + '\x80' + commands.BARCODE_PRINT.K + '\x04' + '123456780' + commands.BARCODE_PRINT.END;
+
+
+    console.log(receipt);
+    this.print.sendToBluetoothPrinter(printMac, receipt);
+
+    if (this.storeCopyStatus) {
+      this.print.sendToBluetoothPrinter(printMac, receipt);
+    }
+  }
+
+  printLastSale() {
+    const printMac = this.printers[0]?.id;
+
+    const date = new Date(Date.now())
+    const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+    let receipt = "";
+    receipt += commands.CASH_DRAWER.CD_KICK_2;
+
+    if (this.receiptPrintedStatus) {
+      receipt += commands.HARDWARE.HW_INIT;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.pole1;
+      receipt += commands.EOL;
+      receipt += this.pole2;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_2WIDTH;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.header1;
+      receipt += commands.EOL;
+      receipt += this.header2;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.header3;
+      receipt += commands.EOL;
+      receipt += this.header4;
+      receipt += commands.EOL;
+      receipt += this.header5;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_4SQUARE;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += this.last_sale.store_info.store_name;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += this.last_sale.store_info.physical_address.country.country_name + " " + this.last_sale.store_info.physical_address.city + " " + this.last_sale.store_info.physical_address.street;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += this.last_sale.store_info.phone;
+      // customer information print
+      if (!this.dontPrintCustomerStatus) {
+        receipt += commands.EOL;
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+        receipt += "Customer Info :";
+        receipt += this.cartService.cart.customer.username;
+      }
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += "Receipt ";
+      receipt += this.last_sale.sale_number;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += commands.EOL;
+      receipt += dateNow;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.HORIZONTAL_LINE.HR_58MM;
+      // receipt += commands.EOL;
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      this.last_sale.products.forEach((p) => {
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+        receipt += p.product_name;
+        // product description print
+        if (this.descriptionStatus) {
+          receipt += commands.EOL;
+          receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+          receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+          receipt += p.product_description;
+        }
+        // product barcode print
+        if (this.printProductBarcodeStatus) {
+          receipt += commands.EOL;
+          receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+          receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+          receipt += "Barcode: ";
+          receipt += p.product_barcode;
+        }
+        receipt += commands.EOL;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+        receipt += `${p.qty}     `;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+        receipt += p.discountedTotalWithoutGlobal_str;
+
+      })
+      receipt += commands.EOL;
+      receipt += commands.HORIZONTAL_LINE.HR_58MM;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Subtotal     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.last_sale.subTotal_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += `Discount${this.last_sale.discount_rate}     `;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.last_sale.discount_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += `Total Tax${this.last_sale.taxRate_str}     `;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.last_sale.taxAmount_str;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Sale Total     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += this.last_sale.totalIncl_str;
+      // receipt += commands.EOL;
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      // receipt += "Voided     ";
+      // receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      // receipt += this.cartService.cart.voidedAmount_str;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Change     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += UtilFunc.getPriceWithCurrency(this.last_sale.change);
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+      receipt += "Balance     ";
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_RT;
+      receipt += UtilFunc.getPriceWithCurrency(this.last_sale.total_to_pay);
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+
+      if (this.policy1Status && this.policy1) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy1;
+        receipt += commands.EOL;
+      }
+      if (this.policy2Status && this.policy2) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy2;
+        receipt += commands.EOL;
+      }
+      if (this.policy3Status && this.policy3) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy3;
+        receipt += commands.EOL;
+      }
+      if (this.policy4Status && this.policy4) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy4;
+        receipt += commands.EOL;
+      }
+      if (this.policy5Status && this.policy5) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.policy5;
+        receipt += commands.EOL;
+      }
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      if (this.ticketPolicyStatus) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.ticketPolicy;
+        receipt += commands.EOL;
+      }
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      if (this.marketing1Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing1;
+        receipt += commands.EOL;
+      }
+      if (this.marketing2Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing2;
+        receipt += commands.EOL;
+      }
+      if (this.marketing3Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing3;
+        receipt += commands.EOL;
+      }
+      if (this.marketing4Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing4;
+        receipt += commands.EOL;
+      }
+      if (this.marketing5Status) {
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += this.marketing5;
+        receipt += commands.EOL;
+      }
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
+    }
+
+    console.log(receipt);
+    this.print.sendToBluetoothPrinter(printMac, receipt);
+
+    if (this.storeCopyStatus) {
+      this.print.sendToBluetoothPrinter(printMac, receipt);
+    }
+
+  }
+
+  emailToCustomer(email): void{
+    const discount_symbol = { percent: '%', amount: '$' };
+    const data = {};
     
+    let template: any = "";
+    template += `<div style="display: block; width: 100%; padding-left: 40%;
+                          font-family: Lato;
+                          font-size: 24px;
+                          font-style: normal;
+                          font-weight: 700;
+                          line-height: 29px;">
+                        <div><b style="margin-bottom: 16px">${this.cartService.cart.store_info.store_name}</b></div>
+                        <div style="font-weight: 400;">Outlet: ${this.cartService.cart.store_info.physical_address.country.country_name} ${this.cartService.cart.store_info.physical_address.city} ${this.cartService.cart.store_info.physical_address.street}</div>
+                    </div>`;
+
+        this.cartService.cart.products.forEach(product => {
+            template +=
+                `<div  style="display: flex;
+                      margin-bottom: 10px;
+                      font-family: Lato;
+                      font-size: 24px;
+                      font-style: normal;
+                      font-weight: 400;
+                      line-height: 29px;
+                      letter-spacing: 0em;
+                      text-align: left;" >
+                      <div style="display: flex; width: 50%">
+                            <div>${product.qty}</div>
+                            <div style="margin-left: 24px;">`;
+            if (product.product_name) {
+                template += `<div>${product.product_name}</div>
+                             <div>
+                               <small>${product.variant_name}</small>
+                             </div>`;
+            } else {
+                template += `<div>${product.product_name}</div>`;
+            }
+            if (product.discount.value) {
+                template += `<div ><small>Disc: ${product.discount.value}</small></div>`;
+            }
+            if (product.note) {
+                template += `<div>
+                                    <small>Note: ${product.note}</small>
+                                 </div>`;
+            }
+            template += `</div>
+                     </div>`;
+            const totalPerItem = (product.qty * product.price * (1 - product.discount.value / 100)).toFixed();
+            template +=
+                `<div style="width: 50%">
+                            <div>$ ${totalPerItem}</div>`;
+            if (product.discount.value > 0) {
+                template += `<div style="text-decoration: line-through">
+                                <small>$ ${product.qty * product.price}</small>
+                            </div>`;
+            }
+            template +=
+                `</div>
+                </div>`;
+        });
+
+        template +=
+            `<div  style="
+                      border-top: 1px solid;
+                      margin-top: 16px;
+                      padding-bottom: 16px;
+                      padding-left: 48px;
+                      border-bottom: 1px solid;
+                      padding-top: 24px;
+                      font-family: Lato;
+                      font-size: 24px;
+                      font-style: normal;
+                      font-weight: 400;
+                      line-height: 29px;
+                      letter-spacing: 0em;
+                      text-align: left;
+                      ">
+                      <div style="display: flex">
+                            <div style="width: 50%">Sub Total</div>
+                            <div style="width: 50%">${this.cartService.cart.subTotal_str}</div>
+                      </div>`;
+        if (this.cartService.cart.discount.value > 0) {
+            template += `<div style="display: flex">
+                                <div style="width: 50%">Additional Discount</div>
+                                <div style="width: 50%">
+                                  ${this.cartService.cart.discount.value} ${discount_symbol[this.cartService.cart.discount.mode]}
+                                </div>
+                        </div>`;
+        }
+        if (this.cartService.cart.tax) {
+            template += `<div style="display: flex; justify-content: space-between">
+                            <div style="width: 50%">Tax</div>
+                            <div style="width: 50%">$ ${this.cartService.cart.tax}</div>
+                          </div>`;
+
+        }
+        template +=
+            `</div>`;
+
+        template +=
+            `<div style="
+                          padding-top: 16px;
+                          display: flex;
+                          font-family: Lato;
+                          font-size: 24px;
+                          font-style: normal;
+                          font-weight: 400;
+                          line-height: 29px;
+                          letter-spacing: 0em;
+                          text-align: left;
+                          margin-bottom: 16px;
+                          padding-bottom: 16px;
+                          border-bottom: 1px solid;
+                        ">
+                          <div style="width: 50%;font-weight: bold">
+                            Sale Total <small>${this.cartService.cart.total_items} items</small>
+                          </div>
+                          <div style="width: 50%;">${this.cartService.cart.totalIncl_str}</div>
+                </div>`;
+
+        this.cartService.cart.payments.forEach(payment => {
+            const date = payment.created_at.toString().split('T')[0];
+            template +=
+                `<div style="padding-left: 48px">
+                      <div style="display: flex;
+                           font-family: Lato;
+                           font-size: 24px;
+                           font-style: normal;
+                           font-weight: 400;
+                           line-height: 29px;
+                           letter-spacing: 0em;
+                           text-align: left;
+                           margin-bottom: 16px;
+                           padding-bottom: 16px;
+                           border-bottom: 1px solid;" >
+                            <div style="width: 50%;">
+                                  <div>
+                                    ${payment.type}
+                                  </div>
+                                  <div>
+                                    <small>` + date + `</small>
+                                  </div>
+                            </div>
+                            <div style="width: 50%;">${payment.amount}</div>
+                      </div>      
+                </div>`;
+        });
+        template +=
+            `<div style="display: flex;
+                           margin-bottom: 16px;
+                           padding-bottom: 16px; ">
+                        <div style="
+                              font-weight: bold;
+                              font-family: Lato;
+                              font-size: 24px;
+                              font-style: normal;
+                              line-height: 29px;
+                              letter-spacing: 0em;
+                              text-align: left;
+                              margin-bottom: 16px;
+                              padding-bottom: 16px;
+                             width: 50%;">Change</div>
+                        <div style="width: 50%">${this.cartService.cart.change}</div>
+               </div>`;
+    console.log("test:", template);
+
+    Object.assign(data, {email, template: template, invoice_number: this.cartService.cart.sale_number});
+
+    this.utilService.post('sell/email', data).subscribe(result => {
+      console.log(result);
+      //  this.cart.save(() => {
+      //   this._completeSale();
+      // });
+    });
   }
 
   completeSale() {
     this.cartService.completeSale(async () => {
       this.toastService.show(Constants.message.successComplete);
-      this.printSale();
+      
+      console.log(this.cart.customer);
+      if(this.cart.customer && this.emailReceiptStatus) {
+        this.emailToCustomer(this.cart.customer.data.email);
+      }
+
+      if(this.receiptPrintedStatus) {
+        if(this.invoicePrintingStatus) {
+          this.invoicePrintConfirm();
+          return;
+        } else {
+          this.printSale();
+        }
+      }      
+
+      this.loadLastSale();
       if (this.cart.payment_status == 'cash') {
         const popover = await this.popoverController.create({
           component: PayChangeComponent,
@@ -828,6 +1764,7 @@ export class SellPage implements OnInit {
           cssClass: 'popover_custom fixed-width',
           translucent: true,
           componentProps: { change: UtilFunc.getPriceWithCurrency(this.cart.change) }
+          // componentProps: { change: UtilFunc.getPriceWithCurrency(this.change) }
         });
 
         popover.onDidDismiss().then(result => {
@@ -837,6 +1774,7 @@ export class SellPage implements OnInit {
       } else {
         this.cartService.newCart();
       }
+      // this.open_register.initTable();
     })
   }
 
@@ -844,11 +1782,14 @@ export class SellPage implements OnInit {
     if (!this.selected_cart_product) return;
     this.selected_cart_product.void = !this.selected_cart_product.void;
     this.label_void_item = this.selected_cart_product.void ? 'Cancel Void' : 'Void Item';
+    // added by yosri at 05/26/2022
+    // this.printSale();
   }
 
   returnItems() {
     this.cartService.loadCart(this.cart._id, 'return', () => {
       this.checkInitCart();
+      // this.printSale();
     })
   }
 
@@ -857,4 +1798,245 @@ export class SellPage implements OnInit {
     if (this.floatInput.hasError('required')) { return Constants.message.requiredField; }
     if (this.floatInput.hasError('min')) { return Constants.message.invalidMinValue.replace('?', Constants.open_value.min.toString()); }
   }
+
+  getReceiptTemplate(): void {
+    this.utilService.get('sell/receipttemplate', { private_web_address: this.cartService.cart.store_info.store_name }).subscribe(result => {
+      if (result && result.body) {
+        this.header1 = result.body.header1;
+        this.header1Status = result.body.header1Status;
+        this.header2 = result.body.header2;
+        this.header2Status = result.body.header2Status;
+        this.header3 = result.body.header3;
+        this.header3Status = result.body.header3Status;
+        this.header4 = result.body.header4;
+        this.header4Status = result.body.header4Status;
+        this.header5 = result.body.header5;
+        this.header5Status = result.body.header5Status;
+        this.policy1 = result.body.policy1;
+        this.policy1Status = result.body.policy1Status;
+        this.policy2 = result.body.policy2;
+        this.policy2Status = result.body.policy2Status;
+        this.policy3 = result.body.policy3;
+        this.policy3Status = result.body.policy3Status;
+        this.policy4 = result.body.policy4;
+        this.policy4Status = result.body.policy4Status;
+        this.policy5 = result.body.policy5;
+        this.policy5Status = result.body.policy5Status;
+        this.marketing1 = result.body.marketing1;
+        this.marketing1Status = result.body.marketing1Status;
+        this.marketing2 = result.body.marketing2;
+        this.marketing2Status = result.body.marketing2Status;
+        this.marketing3 = result.body.marketing3;
+        this.marketing3Status = result.body.marketing3Status;
+        this.marketing4 = result.body.marketing4;
+        this.marketing4Status = result.body.marketing4Status;
+        this.marketing5 = result.body.marketing5;
+        this.marketing5Status = result.body.marketing5Status;
+        this.ticketPolicy = result.body.ticketPolicy;
+        this.ticketPolicyStatus = result.body.ticketPolicyStatus;
+        this.pole1 = result.body.pole1;
+        this.pole2 = result.body.pole2;
+      }
+    });
+  }
+
+  getStorePolicy(): void {
+    this.store_policy.load(()=>{
+      this.receiptPrintedStatus = this.store_policy.prints_settings.receipt_printed;
+      this.storeCopyStatus = this.store_policy.prints_settings.store_copy;
+      this.printBarcodeStatus   = this.store_policy.prints_settings.print_barcode;
+      this.descriptionStatus = this.store_policy.prints_settings.description;
+      this.dontPrintCustomerStatus = this.store_policy.prints_settings.dont_print_customer;
+      this.invoicePrintingStatus = this.store_policy.prints_settings.invoice_printing;
+      this.printProductBarcodeStatus = this.store_policy.prints_settings.print_product;
+      this.printBillStatus = this.store_policy.prints_settings.print_bill;
+      this.emailReceiptStatus = this.store_policy.prints_settings.email_receipt;
+    });
+  }
+
+  addPrinterList(): void {
+    this.print.searchBluetoothPrinter()
+      .then( resp => {
+        this.printers = resp;
+      })
+  }
+
+  voidSale() {
+    let title = 'You are about to void this sale.';
+    let msg = 'This will return the products back into your inventory and remove any payments that were recorded. You’ll still be able to see the details of this sale once it has been voided. This can’t be undone.';
+    this.alertService.presentAlertConfirm(
+      title,
+      msg,
+      () => {
+        this.cart.voidSale(() => {
+          this.toastService.show(Constants.message.successVoided);
+          this.cartService.newCart();
+        })
+      },
+      null,
+      'Void Sale',
+      'Don\'t Void'
+    );
+  }
+
+  loadLastSale(callback?: Function) {
+    const filter = {range: 'last_sale', user_id: this.user._id};
+    this.utilService.get('sale/sale', filter).subscribe(result => {
+      if(result && result.body.data.length==1) {
+        this.last_sale = new Cart(this.authService, this.utilService);
+        this.last_sale.loadByCart(result.body.data[0]);
+        // if(callback) callback();
+      } else {
+        this.last_sale = null;
+      }
+    })
+  }
+
+  openDrawerQuick() {
+    const printMac = this.printers[0]?.id;
+    let data = "";
+    let code1 = "27 112 0 150 250"; //decimal
+    let code2 = commands.CASH_DRAWER.CD_KICK_2;
+    let code = "ESCp0û."; //ascii
+    this.print.sendToBluetoothPrinter(printMac, code2);
+  }
+
+  async openDrawerNote(msg?: string, item?: string, callback?: Function) {
+    const data = { note: "", msg: "", item: "" };
+    const popover = await this.popoverController.create({
+      component: DrawerNoteComponent,
+      // event: ev,
+      cssClass: 'popover_custom fixed-width',
+      translucent: true,
+      componentProps: { data: data }
+    });
+
+    popover.onDidDismiss().then(result => {
+      if (typeof result.data != 'undefined') {
+        let data = result.data;
+        if (data.process && data.reason && data.amount) {
+
+          data.user_id = this.user._id;
+          data.private_web_address = this.user.private_web_address;
+
+          this.utilService.post('cash/history', data).subscribe(result => {
+            this.openDrawerQuick();
+          })
+        }
+      }
+    });
+    await popover.present();
+  }
+
+  openDrawer() {
+    this.confirmPassword(() => {
+      this.openEditCash();
+    });
+  }
+
+  async openEditCash() {
+    let cash = {
+      _id: '',
+      reasons: '',
+      transaction: 1,
+      is_credit: '1'
+    };
+    const popover = await this.popoverController.create({
+      component: EditCashComponent,
+      // event: ev,
+      cssClass: 'popover_custom fixed-width',
+      translucent: true,
+      componentProps: {cash: cash, user: this.user, main_outlet: this.main_outlet}
+    });
+
+    popover.onDidDismiss().then(result => {
+      if(typeof result.data != 'undefined') {
+        let data = result.data;
+        this.openDrawerQuick();
+      }
+    });
+    await popover.present();
+  }
+
+  getFastDiscount() {
+    this.utilService.get("discount/fast_discount").subscribe(result => {
+      const data= result.body.data;
+      if(data) {
+        this.fast_discount = data.discount_percent;
+      }
+    });
+  }
+
+  taxExempt() {
+    this.cart.is_ignoreTax = true;
+    this.cart.save();
+  }
+
+  generateBarcode() {
+    console.log('generate barcode...');
+    // const date = new Date(Date.now());
+    // let value = date.getTime();
+    // // value = this.cart.sale_number;
+    // // value = date.getFullYear() + (date.getMonth() + 1) + date.getDate() + date.getHours() + date.getMinutes() + date.getSeconds();
+
+    // this.barcodeScanner.encode(this.barcodeScanner.Encode.TEXT_TYPE, value).then(data => {
+    //   console.log('barcode value : ', data);
+    //   this.barcode_value = data;
+    // }).catch(err => {
+    //   console.log('Error : ', err);
+    // })
+  }
+
+  invoicePrintConfirm() {
+    let title = 'Confirm Invoice Printing';
+    let msg = 'Do you want to print the invoice?';
+    this.alertService.presentAlertConfirm(
+      title,
+      msg,
+      async () => {
+        this.printSale();
+        this.loadLastSale();
+        if (this.cart.payment_status == 'cash') {
+          const popover = await this.popoverController.create({
+            component: PayChangeComponent,
+            // event: ev,
+            cssClass: 'popover_custom fixed-width',
+            translucent: true,
+            componentProps: { change: UtilFunc.getPriceWithCurrency(this.cart.change) }
+            // componentProps: { change: UtilFunc.getPriceWithCurrency(this.change) }
+          });
+
+          popover.onDidDismiss().then(result => {
+            this.cartService.newCart();
+          });
+          await popover.present();
+        } else {
+          this.cartService.newCart();
+        }
+      },
+      async () => {
+        this.loadLastSale();
+        if (this.cart.payment_status == 'cash') {
+          const popover = await this.popoverController.create({
+            component: PayChangeComponent,
+            // event: ev,
+            cssClass: 'popover_custom fixed-width',
+            translucent: true,
+            componentProps: { change: UtilFunc.getPriceWithCurrency(this.cart.change) }
+            // componentProps: { change: UtilFunc.getPriceWithCurrency(this.change) }
+          });
+
+          popover.onDidDismiss().then(result => {
+            this.cartService.newCart();
+          });
+          await popover.present();
+        } else {
+          this.cartService.newCart();
+        }
+      },
+      'Yes',
+      'No'
+    );
+  }
+
 }

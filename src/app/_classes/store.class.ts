@@ -124,9 +124,9 @@ export class Store {
 
     constructor(
 		private authService: AuthService,
-		private utilService: UtilService)	{	
-        
-		this.user = this.authService.getCurrentUser;		
+		private utilService: UtilService)	{
+
+		this.user = this.authService.getCurrentUser;
 
         for(let s of Store.CUSTOMER_POINT_GIFT) {
             this.customer_point_gift_settings[s.code] = false;
@@ -146,7 +146,7 @@ export class Store {
         this.phone = '';
         this.profile_image = '';
         this.logo = '';
-        this.social_link = {            
+        this.social_link = {
             facebook: '',
             twitter: '',
             linkedin: '',
@@ -173,7 +173,7 @@ export class Store {
         this.default_currency = null;
         this.default_tax = 'outlet';
         this.template = '';
-        this.user_switch_security = 1;        
+        this.user_switch_security = 1;
         this.active = false;
         this.click_collect = false;
         this.store_pickup = true;
@@ -186,7 +186,7 @@ export class Store {
             active: false,
             secret_key: '',
             public_key: ''
-        }    
+        }
         this.plan = {
             id: 'free',
             subscriptionId: ''
@@ -217,7 +217,7 @@ export class Store {
 
     load(success?:Function, no_exist?:Function) {
         this.init();
-        this.utilService.get('auth/store', {}).subscribe(result => {    			
+        this.utilService.get('auth/store', {}).subscribe(result => {
             if(result && result.body) {
                 const store = result.body;
                 this._id = store._id;
@@ -243,8 +243,8 @@ export class Store {
                 this.active = store.active;
                 this.click_collect = store.click_collect || false;
                 this.store_pickup = store.store_pickup;
-                this.paypal = store.paypal || {active: false, secret: '', client_id: ''}; 
-                this.stripe = store.stripe || {active: false, secret_key: '', public_key: ''}; 
+                this.paypal = store.paypal || {active: false, secret: '', client_id: ''};
+                this.stripe = store.stripe || {active: false, secret_key: '', public_key: ''};
                 this.sliders = store.sliders || [];
                 this.banners = store.banners || [];
                 this.services = store.services || [];
@@ -273,7 +273,7 @@ export class Store {
     loadData(data:any) {
         Object.keys(data).forEach(key => {
             this[key] = data[key];
-        });        
+        });
     }
 
     public get data():any {
@@ -335,7 +335,7 @@ export class Store {
             customer_point_gift: this.customer_point_gift,
             gift_rate: this.gift_rate,
             dealer_rate: this.dealer_rate
-        };        
+        };
         return data;
     }
 

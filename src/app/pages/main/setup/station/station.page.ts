@@ -185,7 +185,6 @@ export class StationPage implements OnInit {
     this.selectStationID = id;
     this.utilService.get('station/station', { _id: id }).subscribe(result => {
       if (result && result.body) {
-        console.log(result.body)
         this.form = this.fb.group({
           stationID: [result.body.stationID, Validators.required],
           stationName: [result.body.name, Validators.required],

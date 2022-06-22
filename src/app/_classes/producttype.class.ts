@@ -15,6 +15,8 @@ export class Producttype{
         private_web_address: string,
         products: number,
         touch: boolean,
+        cigarette: boolean,
+        revenue: boolean,
         created_at:string
     }
     util = UtilFunc;
@@ -45,6 +47,8 @@ export class Producttype{
 			slug: '',
             description: '',
             touch: false,
+            cigarette: false,
+            revenue: false,
             products: 0,
             created_at:''
         };

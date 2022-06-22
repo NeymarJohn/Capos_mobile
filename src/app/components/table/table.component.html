@@ -1,10 +1,10 @@
-<div class="ngx-table-controllers" *ngIf="availableTable">  
+<div class="ngx-table-controllers" *ngIf="availableTable">
   <ion-button icon-only size="small" color="danger" (click)="openColumns($event)">
     <ion-icon name="eye-outline"></ion-icon>
   </ion-button>
   <ion-button icon-only size="small" color="danger" (click)="toggleExpand($event)">
     <ion-icon name="chevron-{{expand}}-outline"></ion-icon>
-  </ion-button>  
+  </ion-button>
   <ion-button icon-only size="small" color="tertiary" (click)="openSearch()" *ngIf="show_search">
     <ion-icon name="search-outline"></ion-icon>
   </ion-button>
@@ -13,20 +13,20 @@
   </ion-button>
 </div>
 <div class="ngx-table-wrapper {{tb_name}}" *ngIf="availableTable">
-  <ngx-datatable  
-    #myTable    
+  <ngx-datatable
+    #myTable
     class="material expandable striped"
-    [columnMode]="ColumnMode.flex"    
+    [columnMode]="ColumnMode.flex"
     [headerHeight]="50"
     [footerHeight]="50"
     [rowHeight]="'auto'"
-    [rows]="rows"    
+    [rows]="rows"
     [limit]="limit"
     [loadingIndicator]="loading"
     [externalSorting]="external_sort"
     [externalPaging]="external_page"
     [count]="page!.totalElements"
-    [offset]="page!.pageNumber"    
+    [offset]="page!.pageNumber"
     (page)="onPage($event)"
     (tableContextmenu)="onTableContextMenu($event)"
     (activate)="editRow($event)"
@@ -53,14 +53,14 @@
         <ng-container *ngIf="tb_name=='customers'">
           <app-customer-detail [customer]="row.customer"></app-customer-detail>
         </ng-container>
-      </ng-template>      
+      </ng-template>
     </ngx-datatable-row-detail>
     <ngx-datatable-column
         [width]="20"
         [resizeable]="false"
         [sortable]="false"
         [draggable]="false"
-        [canAutoResize]="false"             
+        [canAutoResize]="false"
         *ngIf="hidden_columns.length>0 || show_details"
       >
       <ng-template let-row="row" let-expanded="expanded" ngx-datatable-cell-template>
@@ -81,8 +81,9 @@
       [sortable]="col.sortable"
       [flexGrow]="1">
     </ngx-datatable-column>
-  </ngx-datatable>  
-  <ion-card class="summary" *ngIf="summary && summary.length>0">    
+  </ngx-datatable>
+  <!-- <ion-card class="summary" *ngIf="summary && summary.length>0">     -->
+  <ion-card class="summary" *ngIf="summary">
     <ion-list>
       <ion-list-header>Summary</ion-list-header>
       <ion-item *ngFor="let s of summary">

@@ -28,8 +28,11 @@ export class EditProductTypeComponent implements OnInit {
   ) {
     this.form = this.fb.group({
       name: ['', [Validators.required]],
+      slug: ['', [Validators.required]],
       description: [''],
-      touch: [false]
+      touch: [false],
+      cigarette: [false],
+      revenue: [false],
     })
   }
 
@@ -37,8 +40,11 @@ export class EditProductTypeComponent implements OnInit {
     if(this.row._id) {
       this.title = 'Edit Product Type';
       this.form.get('name').setValue(this.row.name);
+      this.form.get('slug').setValue(this.row.slug);
       this.form.get('description').setValue(this.row.description);
       this.form.get('touch').setValue(this.row.touchable);
+      this.form.get('cigarette').setValue(this.row.cigaretteable);
+      this.form.get('revenue').setValue(this.row.revenueable);
     }
   }
 
@@ -78,6 +84,12 @@ export class EditProductTypeComponent implements OnInit {
   get nameInput(): any {return this.form.get('name'); }
   get nameInputError(): string {
     if (this.nameInput.hasError('required')) {return Constants.message.requiredField; }        
+    if (this.dup_error) {return 'Already existing type.';}
+  }
+
+  get slugInput(): any {return this.form.get('slug'); }
+  get slugInputError(): string {
+    if (this.slugInput.hasError('required')) {return Constants.message.requiredField; }        
     if (this.dup_error) {return 'Already existing type.';}
   }
 

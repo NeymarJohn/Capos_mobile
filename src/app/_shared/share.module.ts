@@ -28,6 +28,7 @@ import { AddToCartComponent } from '../components/add-to-cart/add-to-cart.compon
 import { ProductVariantsComponent } from '../components/product-variants/product-variants.component';
 import { PriceWeightComponent } from '../components/price-weight/price-weight.component';
 import { SaleNoteComponent } from '../components/sale-note/sale-note.component';
+import { DrawerNoteComponent } from '../components/drawer-note/drawer-note.component';
 import { ConfirmPasswordComponent } from '../components/confirm-password/confirm-password.component';
 import { DiscountComponent } from '../components/discount/discount.component';
 import { QuantityComponent } from '../components/quantity/quantity.component';
@@ -180,7 +181,8 @@ import { SQLitePorter } from '@ionic-native/sqlite-porter/ngx';
         OnlineOrderDetailComponent,
         EditOnlineOrderComponent,
         OnlineOrderVariantsComponent,
-        ColorPicker
+        ColorPicker,
+        DrawerNoteComponent,
     ],
     declarations: [
         HeaderComponent,
@@ -258,7 +260,8 @@ import { SQLitePorter } from '@ionic-native/sqlite-porter/ngx';
         OnlineOrderDetailComponent,
         EditOnlineOrderComponent,
         OnlineOrderVariantsComponent,
-        ColorPicker
+        ColorPicker,
+        DrawerNoteComponent,
     ],
     providers: [
         SQLite,

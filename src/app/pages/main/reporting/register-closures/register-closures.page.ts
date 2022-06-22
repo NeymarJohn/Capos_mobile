@@ -5,6 +5,8 @@ import { Openclose } from 'src/app/_classes/openclose.class';
 import * as UtilFunc from 'src/app/_helpers/util.helper';
 import { AuthService } from 'src/app/_services/auth.service';
 import { UtilService } from 'src/app/_services/util.service';
+import axios from 'axios';
+import { APP_CONSTANTS } from 'src/app/_configs/constants';
 
 interface IData{
   _id: string,
@@ -14,9 +16,9 @@ interface IData{
   store_credit: number,
   cash_concealed: number,
   cash: number,
-  credit: number,  
+  credit: number,
   debit: number,
-  refunds: number,  
+  refunds: number,
   voided: number,
   total: number
 };
@@ -40,7 +42,8 @@ export class RegisterClosuresPage implements OnInit {
     sort_field: 'opening_time',
     sort_order: 'desc'
   };
-  rows:any[];  
+  summary:any[];
+  rows:any[];
   all_columns:any[] = [
     {prop: 'register', name: 'Register', sortable: true, checked: true},
     {prop: 'opening_time', name: 'Time Opened', sortable: true, checked: true},
@@ -61,32 +64,40 @@ export class RegisterClosuresPage implements OnInit {
     private utilService: UtilService,
     private popoverController: PopoverController,
     private nav: NavController
-  ) {    
+  ) {
     this.authService.checkPremission('regiser_closure');
   }
 
   ngOnInit() {
     this.authService.currentUser.subscribe(user => {
       this.user = user;
-      this.search();
+      // this.search();
     })
+  }
+
+  ionViewDidEnter() {
+    this.search();
   }
 
   search() {
     this.loading = true;
     if(this.allData.length == 0) {
       const filter = {outlet: '', status: 2};
-      if(this.user.outlet) filter.outlet = this.user.outlet._id; else delete filter.outlet;
-      this.utilService.get('sell/openclose', filter).subscribe(result => {            
-        if(result && result.body) {
-          for(let s of result.body) {
-            let openClose = new Openclose(this.authService, this.utilService);   
-            openClose.loadDetails(s);                    
-            this.allData.push(openClose);          
+      if(this.user.outlet) {
+        filter.outlet = this.user.outlet._id;
+      } else { delete filter.outlet; }
+      // this.utilService.get('sell/openclose', filter).subscribe(result => {
+      axios.get(`${APP_CONSTANTS.API_URL}sell/openclose`, {params: filter}).then(res => {
+        let result = res.data;
+        if(result) {
+          for(let s of result) {
+            let openClose = new Openclose(this.authService, this.utilService);
+            openClose.loadDetails(s);
+            this.allData.push(openClose);
           }
-        }  
-        this.getTableData();    
-      })
+        }
+          this.getTableData();
+      });
     } else {
       this.getTableData();
     }
@@ -108,7 +119,7 @@ export class RegisterClosuresPage implements OnInit {
       if(!c) continue;
       let data:IData = {
         _id: openClose._id,
-        register: openClose.register.name,        
+        register: openClose.register.name,
         opening_time: openClose.opening_time,
         closing_time: openClose.closing_time,
         store_credit: parseFloat(openClose.receivedStoreCredit),
@@ -119,14 +130,15 @@ export class RegisterClosuresPage implements OnInit {
         refunds: parseFloat(openClose.totalReturns),
         voided: parseFloat(openClose.totalVoided),
         total: parseFloat(openClose.totalExpected)
-      }  
+      }
       this.tableData.push(data);
     }
     this._onSort();
     this.getRowData();
+    this.loadSummary();
     this.loading = false;
   }
-  
+
   getRowData() {
     this.rows = [];
     for(let t of this.tableData) {
@@ -150,7 +162,7 @@ export class RegisterClosuresPage implements OnInit {
   _onSort() {
     let prop = this.filter.sort_field;
     let dir = this.filter.sort_order;
-    const tableData = [...this.tableData];      
+    const tableData = [...this.tableData];
     tableData.sort((a, b)=> {
       if(['opening_time', 'closing_time'].includes(prop)) {
         return UtilFunc.compareDate(a[prop], b[prop]) * (dir === 'desc' ? -1 : 1);
@@ -158,12 +170,12 @@ export class RegisterClosuresPage implements OnInit {
         return a[prop].localeCompare(b[prop]) * (dir === 'desc' ? -1 : 1);
       } else {
         return (a[prop] - b[prop]) * (dir === 'desc' ? -1 : 1);
-      }        
+      }
     })
     this.tableData = tableData;
   }
 
-  onSort(sort:any) {    
+  onSort(sort:any) {
     this.loading = true;
     this.filter.sort_field = sort.prop;
     this.filter.sort_order = sort.dir;
@@ -174,17 +186,17 @@ export class RegisterClosuresPage implements OnInit {
     }, 200);
   }
 
-  async openSearch() {    
+  async openSearch() {
     const popover = await this.popoverController.create({
       component: SearchRegisterClosureComponent,
       // event: ev,
-      cssClass: 'popover_custom',      
+      cssClass: 'popover_custom',
       translucent: true,
       componentProps: {filter: this.filter}
     });
 
-    popover.onDidDismiss().then(result => {      
-      if(typeof result.data != 'undefined') {        
+    popover.onDidDismiss().then(result => {
+      if(typeof result.data != 'undefined') {
         let data = result.data;
         if(data.process && data.filter) {
           for(let key in data.filter) {
@@ -195,7 +207,7 @@ export class RegisterClosuresPage implements OnInit {
       }
     });
 
-    await popover.present(); 
+    await popover.present();
   }
 
   showDetail(row:any) {
@@ -243,8 +255,21 @@ export class RegisterClosuresPage implements OnInit {
     return UtilFunc.getPriceWithCurrency(sum);
   }
 
-  public get summary():any[] {
+  public get _summary():any[] {
     return [
+      {label: 'Store Credit', value: this.totalStoreCredit},
+      {label: 'Cash(concealed total)', value: this.totalConcealedTotal},
+      {label: 'Cash', value: this.totalCash},
+      {label: 'Credit', value: this.totalCreditCard},
+      {label: 'Debit', value: this.totalDebitCard},
+      {label: 'Refunds', value: this.totalRefunds},
+      {label: 'Voided', value: this.totalVoided},
+      {label: 'Total', value: this.totalTotal},
+    ];
+  }
+
+  loadSummary() {
+    this.summary = [
       {label: 'Store Credit', value: this.totalStoreCredit},
       {label: 'Cash(concealed total)', value: this.totalConcealedTotal},
       {label: 'Cash', value: this.totalCash},

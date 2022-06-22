@@ -33,14 +33,14 @@ export class CartService {
     private utilService: UtilService,
     private alertService: AlertService,
     private popoverController: PopoverController
-  ) {   
+  ) {
     this.openClose = new Openclose(this.authService, this.utilService);
     this.cart = new Cart(this.authService, this.utilService);
 
     this.authService.currentUser.subscribe(user => {
       if(user) {
         this.user = user;
-        this.init();                
+        this.init();
       }
     })
   }
@@ -65,12 +65,12 @@ export class CartService {
   getLastClose() {
     this.lastClose = null;
     const query = {
-      private_web_address: this.user.private_web_address, 
+      private_web_address: this.user.private_web_address,
       outlet: this.user.outlet ? this.user.outlet._id : null,
       register: this.user.outlet.register[0],
       status: 2
     };
-    if(!this.user.outlet) delete query.outlet;    
+    if(!this.user.outlet) delete query.outlet;
     this.utilService.get('sell/openclose', query).subscribe(async result => {
       if(result && result.body.length>0) {
         let c = result.body[0];
@@ -80,10 +80,29 @@ export class CartService {
     });
   }
 
+  getOpenClose() {
+
+    const query = {
+        private_web_address: this.user? this.user.private_web_address: null,
+        outlet: this.user.outlet ? this.user.outlet._id : null,
+        register: this.user?this.user.outlet.register[0]:null,
+        status: 1
+    };
+    if(!this.user || !this.user.outlet) delete query.outlet;
+    this.utilService.get('sell/openclose', query).subscribe(result => {
+        if(result && result.body && result.body.length>0) {
+          this.openClose = new Openclose(this.authService, this.utilService);
+          this.openClose.loadDetails(result.body[0]);
+        }
+    }, error => {
+        console.log(error);
+    })
+  }
+
   openRegister(data:any, callback?:Function) {
     this.openClose.open_value = data.open_value;
-    this.openClose.open_note = data.open_note;  
-    this.openClose.save(() => {      
+    this.openClose.open_note = data.open_note;
+    this.openClose.save(() => {
       this.init(callback);
     }, error => {
       callback(false);
@@ -95,7 +114,7 @@ export class CartService {
     this.openClose.save(() => {
       this.init();
       if(callback) callback();
-    })    
+    })
   }
 
   loadCart(_id?:string, action?:string, callback?:Function) {
@@ -111,8 +130,8 @@ export class CartService {
       })
     } else {
       this.cart.loadFromSale(_id, sale_data => {
-        this.new_sale = sale_data;         
-        if(callback) callback(true);  
+        this.new_sale = sale_data;
+        if(callback) callback(true);
       }, () => {
         if(callback) callback(false);
       })
@@ -129,22 +148,22 @@ export class CartService {
       this.new_sale.origin_sale_number = this.new_sale.sale_number;
       this.new_sale._id = '';
       this.new_sale.sale_number = UtilFunc.genRandomOrderString(8);
-    }    
-    this.cart.loadByCart(this.new_sale); 
-    if(this.new_sale.cart_mode == 'return') {   
-      if(this.action == 'return') {   
-        this.cart.setRefund();            
-      }    
+    }
+    this.cart.loadByCart(this.new_sale);
+    if(this.new_sale.cart_mode == 'return') {
+      if(this.action == 'return') {
+        this.cart.setRefund();
+      }
     }
     this.new_sale = null;
     this.action = null;
   }
 
-  initCart() {        
+  initCart() {
     this.processCustomerCredit();
     if(this.cart.sale_status == 'on_account') {
       this.processCustomerBalance('', this.cart.total_paid);
-    }        
+    }
   }
 
   newCart() {
@@ -160,7 +179,7 @@ export class CartService {
         if(payment.type == 'store_credit') {
           credit += payment.amount;
         }
-      }      
+      }
       if(this.cart.isRefund) {
         this.cart.customer.temp.credit = Math.abs(credit);
         this.cart.customer.temp.total_issued = Math.abs(credit);
@@ -177,10 +196,10 @@ export class CartService {
       if (pay_mode === 'on_account') {
         customer.temp.debit = pay_amount;
         customer.temp.total_spent = pay_amount;
-      } else if(pay_mode == 'store_credit') {                
+      } else if(pay_mode == 'store_credit') {
         if(this.cart.isRefund || this.cart.isVoid) {
           customer.temp.credit = Math.abs(pay_amount);
-          customer.temp.total_issued = Math.abs(pay_amount);          
+          customer.temp.total_issued = Math.abs(pay_amount);
         } else {
           customer.temp.credit = -pay_amount;
           customer.temp.total_redeemed = Math.abs(pay_amount);
@@ -210,45 +229,45 @@ export class CartService {
     }
   }
 
-  async addToCart(product:Product) {            
+  async addToCart(product:Product) {
     if(!this.checkCustomerInfoReq(product)) return;
     if(!this.checkRequiredAge(product)) return;
     if(product.data.variant_inv) {
       let cart_products:CartProduct[] = [];
-      for(let vp of product.data.variant_products) {        
-        let cart_product = new CartProduct(product, vp._id);        
-        if(!cart_product.price && product.data.price_prompt || !cart_product.weight && product.data.scale_product 
+      for(let vp of product.data.variant_products) {
+        let cart_product = new CartProduct(product, vp._id);
+        if(!cart_product.price && product.data.price_prompt || !cart_product.weight && product.data.scale_product
           || !cart_product.serial && product.data.serial_required) {
           const properties = this.getPropertiesFromCarts(product._id, vp._id);
           cart_product.prompt_price = properties.prompt_price;
-          cart_product.weight = properties.weight;    
-          cart_product.serial = properties.serial;    
+          cart_product.weight = properties.weight;
+          cart_product.serial = properties.serial;
         }
-        cart_product.qty = this.cart.getCurrentQty(cart_product);        
-        cart_products.push(cart_product);        
-      }    
+        cart_product.qty = this.cart.getCurrentQty(cart_product);
+        cart_products.push(cart_product);
+      }
       const popover = await this.popoverController.create({
         component: ProductVariantsComponent,
         // event: ev,
-        cssClass: 'popover_custom',      
+        cssClass: 'popover_custom',
         translucent: true,
         componentProps: {data:{cart_products: cart_products}}
       });
-  
-      popover.onDidDismiss().then(result => {      
-        if(typeof result.data != 'undefined') {        
+
+      popover.onDidDismiss().then(result => {
+        if(typeof result.data != 'undefined') {
           let data1 = result.data;
           if(data1.process) {
-            for(let sp of data1.sel_products) {   
+            for(let sp of data1.sel_products) {
               let cart_product = new CartProduct(product, sp.variant_id);
               cart_product.prompt_price = sp.prompt_price;
               cart_product.weight = sp.weight;
               cart_product.serial = sp.serial;
               this.cart.addProduct(cart_product, sp.qty);
             }
-            this.cart.save();          
-          } 
-        }          
+            this.cart.save();
+          }
+        }
       });
       await popover.present();
 
@@ -259,7 +278,7 @@ export class CartService {
       cart_product.weight = properties.weight;
       cart_product.serial = properties.serial;
 
-      let data = {price: '', weight:'', blank_cup_weight: 0, serial: ''}, f = false;      
+      let data = {price: '', weight:'', blank_cup_weight: 0, serial: ''}, f = false;
       if(!cart_product.price && product.data.price_prompt) {
         f = true;
       } else {
@@ -280,8 +299,8 @@ export class CartService {
       if(f){
         await this.openPW(cart_product, data);
       } else {
-        this.cart.addProduct(cart_product);      
-        this.cart.save();        
+        this.cart.addProduct(cart_product);
+        this.cart.save();
       }
     }
   }
@@ -290,26 +309,26 @@ export class CartService {
     const popover = await this.popoverController.create({
       component: PriceWeightComponent,
       // event: ev,
-      cssClass: 'popover_custom fixed-width',      
+      cssClass: 'popover_custom fixed-width',
       translucent: true,
       componentProps: {data:data}
     });
 
-    popover.onDidDismiss().then(result => {      
-      if(typeof result.data != 'undefined') {        
+    popover.onDidDismiss().then(result => {
+      if(typeof result.data != 'undefined') {
         let data1 = result.data;
         if(data1.process) {
           if(data1.prompt_price) cart_product.prompt_price = data1.prompt_price;
           if(data1.weight) cart_product.weight = data1.weight;
           if(data1.serial) cart_product.serial = data1.serial;
-          this.cart.addProduct(cart_product);      
-          this.cart.save();                  
-        } 
-      }          
+          this.cart.addProduct(cart_product);
+          this.cart.save();
+        }
+      }
     });
-    await popover.present();         
+    await popover.present();
   }
-  
+
   getPropertiesFromCarts(product_id:string, variant_id:string='') {
     let data = {
       prompt_price: 0,
@@ -330,7 +349,7 @@ export class CartService {
       return true;
     } else {
       this.alertService.presentAlert('Confirm Customer Info',
-        'Need customer info in order to buy this product.<br>Please choose a customer.');      
+        'Need customer info in order to buy this product.<br>Please choose a customer.');
       return false;
     }
   }
@@ -341,15 +360,15 @@ export class CartService {
     } else {
       let customer = this.cart.customer;
       if(!customer) {
-        this.alertService.presentAlert('Confirm Customer Age', 
-          'Need to check customer if he(she) meets the required age to buy this product.<br>Please choose a customer.');        
+        this.alertService.presentAlert('Confirm Customer Age',
+          'Need to check customer if he(she) meets the required age to buy this product.<br>Please choose a customer.');
         return false;
       } else {
         let required_age = product.data.required_age;
         let customer_age = UtilFunc.getAge(customer.data.birthday);
         if(customer_age<required_age) {
-          this.alertService.presentAlert('Confirm Customer Age', 
-            'Only customer over the age of ' + required_age + ' can buy this product.');          
+          this.alertService.presentAlert('Confirm Customer Age',
+            'Only customer over the age of ' + required_age + ' can buy this product.');
           return false;
         } else {
           return true;
@@ -359,12 +378,20 @@ export class CartService {
   }
 
   removeProductFromCart(product: CartProduct) {
-    let index = this.cart.products.findIndex(item => item == product);    
+    let index = this.cart.products.findIndex(item => item == product);
     let sel_bundle = this.cart.getSelectedBundleProduct();
     if(sel_bundle.qty == product.qty) {
       this.cart.removeProduct(index);
     } else {
       product.qty -= sel_bundle.qty;
+    }
+    this.cart.save();
+  }
+
+  removeProductAllFromCart() {
+    for(let product of this.cart.products) {
+      let index = this.cart.products.findIndex(item => item.product_id == product.product_id);
+      this.cart.removeProduct(index);
     }
     this.cart.save();
   }
@@ -387,7 +414,7 @@ export class CartService {
     if(this.cart.cart_mode == 'return') {
       this.cart.sale_status = 'return_completed';
     }
-        
+
     if(this.cart.customer) this.cart.customer.save();
     // if (this.cart.customer && this.send_email) {
     //   this.emailToCustomer(this.cart.customer.data.email);
@@ -396,7 +423,7 @@ export class CartService {
         callback();
       });
     // }
-  }  
+  }
 
   emailToCustomer(email, callback:Function): void{
     const data = {};
@@ -414,7 +441,7 @@ export class CartService {
       _ids.push(cp.product_id);
     }
     const data = {range: 'cart_products', _ids: _ids.join(',')};
-    this.utilService.get('product/product', data).subscribe(result => {        
+    this.utilService.get('product/product', data).subscribe(result => {
       if (result && result.body) {
         const products = result.body;
         products.forEach(product => {
@@ -427,7 +454,7 @@ export class CartService {
               cp.product.data.inventory = product.inventory;
             }
           }
-        });        
+        });
       }
       callback();
     });
@@ -443,7 +470,7 @@ export class CartService {
           if(product.qty == 0) {
             let index = this.cart.products.findIndex(item => item.product_id == product.product_id && item.variant_id == product.variant_id);
             this.cart.products.splice(index, 1);
-          }          
+          }
         }
       }
       callback();
