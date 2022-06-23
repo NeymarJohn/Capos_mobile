@@ -2,8 +2,9 @@ import { Component } from '@angular/core';
 import { AuthService } from './_services/auth.service';
 import { DbService } from './_services/db.service';
 import { UtilService } from './_services/util.service';
-import { AlertService } from 'src/app/_services/alert.service';
 
+import { AlertService } from 'src/app/_services/alert.service';
+import { OpenRegisterService } from 'src/app/_services/open-register.service';
 import { BackgroundSetting } from './_configs/constants';
 import { Platform } from '@ionic/angular';
 import { BackgroundMode } from '@ionic-native/background-mode/ngx';
@@ -30,6 +31,7 @@ export class AppComponent {
     private platform: Platform,
     private alertService: AlertService,
     public store_policy: StorePolicy,
+    public openRegisterService: OpenRegisterService,
   ) {    
     this.utilService.isOnline = navigator.onLine;    
     this.appPages = this.authService.main_menu;
@@ -89,12 +91,9 @@ export class AppComponent {
       let current_hour = now_date.getHours();
       let current_minute = now_date.getMinutes();
 
-      this.alertService.presentAlert('Time-----',
-       current_hour + ":" + current_minute);
-
-      // console.log("Time---------------------", current_hour + ":" + current_minute);
       if(current_hour == 4 && current_minute == 0) {
         // close register in open/close register panel
+        this.openRegisterService.closeRegister();
       }
     }
     // if(!this.autoBatchCloseStatus && this.backgroundMode.isEnabled()) {

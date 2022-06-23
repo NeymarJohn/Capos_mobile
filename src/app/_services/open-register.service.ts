@@ -313,10 +313,15 @@ export class OpenRegisterService {
 	                          <div style="margin-left: 50px;">`;
 	        template += `<div>${p.name}</div>`;
 	        template += `</div></div>`;
-	        template +=
+	        if(!this.paymentSummaryStatus) {
+	        	template +=
 	            `<div style="width: 50%">
 	                        <div>$ ${p.sale_sum}</div>`;
-	        template += `</div></div>`;
+	        	template += `</div></div>`;
+	        } else {
+	        	template += `</div>`;
+	        }
+	        
 	    });
 	    template += `</div>`;
 

@@ -3,8 +3,8 @@
 // The list of file replacements can be found in `angular.json`.
 
 // const serverUrl = 'http://10.10.13.189:3200/';
-const serverUrl = 'https://www.caposgt.com/';
-// const serverUrl = 'http://localhost:8080/';
+// const serverUrl = 'https://www.caposgt.com/';
+const serverUrl = 'http://localhost:8080/';
 export const environment = {
   production: false,
   staging: false,

@@ -1154,7 +1154,6 @@ export class SellPage implements OnInit {
     const printMac = this.printers[0]?.id;
     const date = new Date(Date.now())
     const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-    console.log(this.barcode_value);
     let receipt = "";
     receipt += commands.CASH_DRAWER.CD_KICK_2;
     if (this.receiptPrintedStatus) {
@@ -1346,13 +1345,14 @@ export class SellPage implements OnInit {
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
     }
 
-    receipt += commands.BARCODE_PRINT.GS + commands.BARCODE_PRINT.H + '\x80' + commands.BARCODE_PRINT.K + '\x04' + '123456780' + commands.BARCODE_PRINT.END;
+    if(this.printBarcodeStatus) {
+      receipt += commands.BARCODE_PRINT.GS + commands.BARCODE_PRINT.H + '\x80' + commands.BARCODE_PRINT.K + '\x04' + '123456780' + commands.BARCODE_PRINT.END;
+    }
 
-
-    console.log(receipt);
+    // console.log(receipt);
     this.print.sendToBluetoothPrinter(printMac, receipt);
 
-    if (this.storeCopyStatus) {
+    if (this.printBarcodeStatus) {
       this.print.sendToBluetoothPrinter(printMac, receipt);
     }
   }
@@ -1553,7 +1553,11 @@ export class SellPage implements OnInit {
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
     }
 
-    console.log(receipt);
+    if(this.printBarcodeStatus) {
+      receipt += commands.BARCODE_PRINT.GS + commands.BARCODE_PRINT.H + '\x80' + commands.BARCODE_PRINT.K + '\x04' + '123456780' + commands.BARCODE_PRINT.END;
+    }
+
+    // console.log(receipt);
     this.print.sendToBluetoothPrinter(printMac, receipt);
 
     if (this.storeCopyStatus) {
@@ -1731,10 +1735,7 @@ export class SellPage implements OnInit {
     Object.assign(data, {email, template: template, invoice_number: this.cartService.cart.sale_number});
 
     this.utilService.post('sell/email', data).subscribe(result => {
-      console.log(result);
-      //  this.cart.save(() => {
-      //   this._completeSale();
-      // });
+      // console.log(result);
     });
   }
 
@@ -1742,7 +1743,6 @@ export class SellPage implements OnInit {
     this.cartService.completeSale(async () => {
       this.toastService.show(Constants.message.successComplete);
       
-      console.log(this.cart.customer);
       if(this.cart.customer && this.emailReceiptStatus) {
         this.emailToCustomer(this.cart.customer.data.email);
       }
@@ -1973,18 +1973,7 @@ export class SellPage implements OnInit {
   }
 
   generateBarcode() {
-    console.log('generate barcode...');
-    // const date = new Date(Date.now());
-    // let value = date.getTime();
-    // // value = this.cart.sale_number;
-    // // value = date.getFullYear() + (date.getMonth() + 1) + date.getDate() + date.getHours() + date.getMinutes() + date.getSeconds();
-
-    // this.barcodeScanner.encode(this.barcodeScanner.Encode.TEXT_TYPE, value).then(data => {
-    //   console.log('barcode value : ', data);
-    //   this.barcode_value = data;
-    // }).catch(err => {
-    //   console.log('Error : ', err);
-    // })
+    // console.log('generate barcode...');
   }
 
   invoicePrintConfirm() {

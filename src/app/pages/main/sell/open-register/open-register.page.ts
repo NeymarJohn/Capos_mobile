@@ -38,7 +38,7 @@ export class OpenRegisterPage implements OnInit {
     {prop: 'sale_qty', name: 'SaleQty', sortable: true, checked: true},
     {prop: 'sale_sum', name: 'SaleSum', sortable: true, checked: true}
   ];
-  show_columns:any[] = [1, 2, 3];
+  show_columns:any[] = [1,2,3];
   tableloading: boolean = false;
   
 
@@ -71,7 +71,6 @@ export class OpenRegisterPage implements OnInit {
 
   ngOnInit() {
     this.tableData = [];
-    console.log('ngOnInit');
     if('close'.includes(this.mode)) {
       this.cartService.getOpenClose();
     } else {
@@ -81,7 +80,6 @@ export class OpenRegisterPage implements OnInit {
   }
 
   ionViewDidEnter() {
-    console.log('ionViewDidEnter');
     this.tableData = [];
     this.getReportbyCategories();
   }
@@ -171,7 +169,6 @@ export class OpenRegisterPage implements OnInit {
   
 
   public initTable() {
-    console.log('initTable');
     this.getReportbyCategories();
   }
 
