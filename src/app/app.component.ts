@@ -2,6 +2,12 @@ import { Component } from '@angular/core';
 import { AuthService } from './_services/auth.service';
 import { DbService } from './_services/db.service';
 import { UtilService } from './_services/util.service';
+import { AlertService } from 'src/app/_services/alert.service';
+
+import { BackgroundSetting } from './_configs/constants';
+import { Platform } from '@ionic/angular';
+import { BackgroundMode } from '@ionic-native/background-mode/ngx';
+import { StorePolicy }      from 'src/app/_classes/store_policy.class';
 
 @Component({
   selector: 'app-root',
@@ -13,9 +19,17 @@ export class AppComponent {
   cur_item: string = '';
   login_status: boolean = false;
 
+  timerObject: any;
+
+  autoBatchCloseStatus: boolean = false;
+
   constructor(
     private authService: AuthService,
-    private utilService: UtilService,    
+    private utilService: UtilService,
+    private backgroundMode: BackgroundMode,
+    private platform: Platform,
+    private alertService: AlertService,
+    public store_policy: StorePolicy,
   ) {    
     this.utilService.isOnline = navigator.onLine;    
     this.appPages = this.authService.main_menu;
@@ -30,6 +44,12 @@ export class AppComponent {
       console.log('online');
       this.utilService.isOnline = true;
     });
+    
+  }
+
+  ngOnInit() {
+    this.backgroundMode.enable();
+    this.runBackgroundMode();
   }
 
   get isLoggedIn():boolean {
@@ -42,5 +62,53 @@ export class AppComponent {
 
   getMenu() {
     this.appPages = this.authService.main_menu;    
+  }
+
+  getStorePolicy(): void {
+    this.store_policy.load(()=>{
+      this.autoBatchCloseStatus = this.store_policy.batch_settings.auto_batch_close;
+    });
+  }
+
+  private runBackgroundMode() {
+    this.platform.ready().then(() => {
+      console.log('run background mode...');
+      setInterval(() => {
+        this.getStorePolicy();
+        this.startCheckTime();
+      }, BackgroundSetting._waitTime);
+    });
+    
+  }
+
+  startCheckTime() {
+    console.log("Timer is started");
+
+    if(this.autoBatchCloseStatus) {
+      let now_date = new Date();
+      let current_hour = now_date.getHours();
+      let current_minute = now_date.getMinutes();
+
+      this.alertService.presentAlert('Time-----',
+       current_hour + ":" + current_minute);
+
+      // console.log("Time---------------------", current_hour + ":" + current_minute);
+      if(current_hour == 4 && current_minute == 0) {
+        // close register in open/close register panel
+      }
+    }
+    // if(!this.autoBatchCloseStatus && this.backgroundMode.isEnabled()) {
+    //   // stop timing
+    //   this.stopcheckTime();
+    //   this.backgroundMode.disable();
+    // } else if(this.autoBatchCloseStatus && !this.backgroundMode.isEnabled()) {
+    //   // start timing
+    //   this.timerObject = setInterval(()=>{
+    //     this.startCheckTime();
+    //   }, BackgroundSetting._waitTime);
+    //   this.backgroundMode.enable();
+    // } else {
+      
+    // }
   }
 }

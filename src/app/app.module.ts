@@ -15,6 +15,8 @@ import { Camera } from '@ionic-native/Camera/ngx';
 import { Printer } from '@ionic-native/printer/ngx';
 import { Device } from "@ionic-native/device/ngx";
 import {BluetoothSerial} from '@ionic-native/bluetooth-serial/ngx';
+import { BackgroundMode } from '@ionic-native/background-mode/ngx';
+// import { BackgroundMode } from '@awesome-cordova-plugins/background-mode/ngx';
 
 export function tokenGetter(): any {
   return localStorage.getItem('token');
@@ -40,7 +42,8 @@ export function tokenGetter(): any {
     Device,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }, 
     IonicGestureConfig,
-    BluetoothSerial
+    BluetoothSerial,
+    BackgroundMode
   ],
   bootstrap: [AppComponent],
 })

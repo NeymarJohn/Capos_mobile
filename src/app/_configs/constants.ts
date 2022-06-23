@@ -631,5 +631,12 @@ export const Commands = {
     TXT_ALIGN_LT: '\x1b\x61\x00', // Left justification
     TXT_ALIGN_CT: '\x1b\x61\x01', // Centering
     TXT_ALIGN_RT: '\x1b\x61\x02', // Right justification
-  }
+  },
+
+
 };
+
+// Background Timer
+export const BackgroundSetting = {
+  _waitTime: 60000, // 1 minute
+}
