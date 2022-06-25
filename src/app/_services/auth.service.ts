@@ -113,7 +113,7 @@ export class AuthService {
     }
     let user = this.getCurrentUser;
     let f:boolean = true;
-    if(user.role) {
+    if(user && user.role) {
       for(let p of page_permissions[page]) {
         if(!user.role.permissions.includes(p)) {
           f = false;
@@ -126,7 +126,8 @@ export class AuthService {
 
     if(!f) {
       this.toastService.show('You have no permission for this page');
-      this.nav.navigateForward(['/dashboard/home']);
+      // this.nav.navigateForward(['/dashboard/home']);
+      this.nav.navigateForward(['/static/home']);
     }
   }
 

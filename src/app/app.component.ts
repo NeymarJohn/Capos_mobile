@@ -32,7 +32,7 @@ export class AppComponent {
     public openRegisterService: OpenRegisterService, 
     private backgroundMode: BackgroundMode,
     private plt: Platform,
-  ) {    
+  ) {
     this.utilService.isOnline = navigator.onLine;    
     this.appPages = this.authService.main_menu;
     
@@ -47,9 +47,11 @@ export class AppComponent {
       this.utilService.isOnline = true;
     });
 
-    this.getStorePolicy();
+  }
 
-    this.initBackgroundMode();
+  ngOnInit() {
+    this.backgroundMode.enable();
+    this.runBackgroundMode();
   }
 
   get isLoggedIn():boolean {
@@ -64,45 +66,23 @@ export class AppComponent {
     this.appPages = this.authService.main_menu;    
   }
 
-  private initBackgroundMode() {
-    var flag = true;
+  private runBackgroundMode() {
     this.plt.ready().then(()=>{
-      console.log("backgroundMode starting...");
-      this.timer_object = setInterval(() => {
-        this.startCheckModule();
-      }, this.wait_time);
-
-      if(this.autoBatchCloseStatus) {
-        this.backgroundMode.enable();
-      }   
+      console.log('run background mode...');
+      setInterval(()=>{
+        this.getStorePolicy();
+        this.startCheckTime();
+      }, 60000);
     });
   }
 
-  stopCheckTime() {
-    clearInterval(this.timer_object);
-  }
-
-  startCheckModule() {
-    this.getStorePolicy();
-    if(!this.autoBatchCloseStatus && this.backgroundMode.isEnabled()){
-      console.log("stop timing...");
-      this.stopCheckTime();
-      this.backgroundMode.disable();  
-    } else if(this.autoBatchCloseStatus && !this.backgroundMode.isEnabled()) {
-      console.log("init timing...");
-      this.timer_object = setInterval(() => {
-        this.startCheckModule();
-      }, this.wait_time);
-      this.backgroundMode.enable();
-      // this.initBackgroundMode();
-    } else {
+  startCheckTime() {
+    console.log('timer is starting...');
+    if(this.autoBatchCloseStatus) {
       let now_date = new Date();
       let current_hour = now_date.getHours();
       let current_minute = now_date.getMinutes();
-      console.log(current_hour + ":" + current_minute);
-      if(current_hour === 4 && current_minute === 0){
-        console.log('Closed register on the background mode')
-        // this.open_register.closeRegister(false);
+      if(current_hour == 4 && current_minute == 0) {
         this.openRegisterService.closeRegister();
       }
     }

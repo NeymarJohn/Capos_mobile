@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 import { IonicModule } from '@ionic/angular';
 import { AutoCompleteModule } from 'ionic4-auto-complete';
+import { File } from '@ionic-native/file/ngx';
 
 import { SellPageRoutingModule } from './sell-routing.module';
 
@@ -33,6 +34,6 @@ import { SearchProductService } from 'src/app/_services/search-product.service';
     SalesHistoryPage,
     FulfillmentsPage
   ],
-  providers: [SearchProductService]
+  providers: [SearchProductService, File]
 })
 export class SellPageModule {}

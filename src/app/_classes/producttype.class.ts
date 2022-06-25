@@ -28,13 +28,16 @@ export class Producttype{
 		private utilService: UtilService)	{	
 
 		this.user = this.authService.getCurrentUser;
-		this.utilService.get('auth/store', {}).subscribe(result => {    			
-			this.store_info = result.body;      
-		});
 
-		this.utilService.get('auth/user?_id=' + this.user._id).subscribe(result => {
-			this.user.outlet = result.body.outlet;        
-		})
+		if(this.user) {
+			this.utilService.get('auth/store', {}).subscribe(result => {    			
+				this.store_info = result.body;      
+			});
+	
+			this.utilService.get('auth/user?_id=' + this.user._id).subscribe(result => {
+				this.user.outlet = result.body.outlet;        
+			});
+		}
 
 		this.init();
 	}

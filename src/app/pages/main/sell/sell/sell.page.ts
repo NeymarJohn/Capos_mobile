@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators }                 from '@angular/for
 import { ActionSheetController, NavController, Platform, PopoverController }    from '@ionic/angular';
 import { AutoCompleteOptions, AutoCompleteComponent }                           from 'ionic4-auto-complete';
 // import { BarcodeScanner } from "@ionic-native/barcode-scanner/ngx";
+import { File } from '@ionic-native/file/ngx';
 
 import { ChooseCustomerComponent }      from 'src/app/components/choose-customer/choose-customer.component';
 import { ConfirmPasswordComponent }     from 'src/app/components/confirm-password/confirm-password.component';
@@ -134,6 +135,22 @@ const commands = {
     TXT_ALIGN_LT: '\x1b\x61\x00', // Left justification
     TXT_ALIGN_CT: '\x1b\x61\x01', // Centering
     TXT_ALIGN_RT: '\x1b\x61\x02', // Right justification
+  },
+
+  BARCODE_PRINT: {
+    GS: '\x1d',
+    H: '\x68',
+    W: '\x77',
+    K: '\x6b',
+    END: '\x00'
+  },
+
+  IMAGE_PRINT: {
+    ESC_INIT: '\x1b\x2a',
+    M1: '\x00',
+    M2: '\x01',
+    nL: '\x04',
+    nH: '\x00',
   }
 }
 
@@ -242,8 +259,7 @@ export class SellPage implements OnInit {
     private nav: NavController,
     private fb: FormBuilder,
     private print: PrintService,
-    // private barcodeScanner: BarcodeScanner,
-
+    private file: File,
   ) {
     this.authService.currentUser.subscribe(user => {
       this.user = user;
@@ -1147,15 +1163,27 @@ export class SellPage implements OnInit {
     const printMac = this.printers[0]?.id;
     const date = new Date(Date.now())
     const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+    let barcode = date.getTime().toString();
+
     let receipt = "";
     receipt += commands.CASH_DRAWER.CD_KICK_2;
     if (this.receiptPrintedStatus) {
       receipt += commands.HARDWARE.HW_INIT;
+      if(this.cartService.cart.store_info.logo && this.storeLogoStatus) {
+        receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+        receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+        receipt += commands.IMAGE_PRINT.ESC_INIT;
+        receipt += commands.IMAGE_PRINT.M1;
+        receipt += commands.IMAGE_PRINT.nL;
+        receipt += commands.IMAGE_PRINT.nH;
+        receipt += "\xff\x7e\x3c\x18";
+        receipt += commands.EOL;
+        receipt += commands.EOL;
+      }
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
       receipt += this.pole1;
       receipt += commands.EOL;
       receipt += this.pole2;
-      receipt += commands.EOL;
       receipt += commands.EOL;
       receipt += commands.TEXT_FORMAT.TXT_2WIDTH;
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
@@ -1183,7 +1211,7 @@ export class SellPage implements OnInit {
       receipt += commands.EOL;
       receipt += this.cartService.cart.store_info.phone;
       // customer information print
-      if (!this.dontPrintCustomerStatus) {
+      if (this.cartService.cart.customer && !this.dontPrintCustomerStatus) {
         receipt += commands.EOL;
         receipt += commands.EOL;
         receipt += commands.TEXT_FORMAT.TXT_NORMAL;
@@ -1338,8 +1366,22 @@ export class SellPage implements OnInit {
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
     }
 
+    if(this.printBarcodeStatus) {
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += commands.BARCODE_PRINT.GS + commands.BARCODE_PRINT.H + '\x80';
+      receipt += commands.BARCODE_PRINT.GS + commands.BARCODE_PRINT.K + '\x04' + barcode + commands.BARCODE_PRINT.END;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += barcode;
+    }
 
+    receipt += commands.EOL;
+    receipt += commands.EOL;
     console.log(receipt);
+
     this.print.sendToBluetoothPrinter(printMac, receipt);
 
     if (this.storeCopyStatus) {
