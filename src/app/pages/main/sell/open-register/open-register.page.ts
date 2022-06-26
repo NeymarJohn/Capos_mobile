@@ -65,7 +65,7 @@ export class OpenRegisterPage implements OnInit {
       open_value: ['', [Validators.required, Validators.min(1)]],
       open_note: ['']
     });
-    this.addPrinterList();
+    // this.addPrinterList();
     
   }
 

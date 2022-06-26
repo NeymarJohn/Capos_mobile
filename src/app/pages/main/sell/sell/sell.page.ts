@@ -39,7 +39,7 @@ import { SaleDetailComponent } from 'src/app/components/sale-detail/sale-detail.
 import { EditCashComponent } from 'src/app/components/edit-cash/edit-cash.component';
 import { async } from 'q';
 
-// import { OpenRegisterPage } from 'src/app/pages/main/sell/open-register/open-register.page';
+import { OpenRegisterPage } from 'src/app/pages/main/sell/open-register/open-register.page';
 
 const commands = {
   LF: '\x0a',
@@ -236,8 +236,9 @@ export class SellPage implements OnInit {
   constructor(
     public providerProduct: SearchProductService,
     public payment: Payment,
-    public store_policy: StorePolicy,
-    // public open_register: OpenRegisterPage,
+    public store_policy:StorePolicy,
+    public open_register: OpenRegisterPage,
+
     private platform: Platform,
     private popoverController: PopoverController,
     private actionSheetController: ActionSheetController,
@@ -1154,6 +1155,8 @@ export class SellPage implements OnInit {
     const printMac = this.printers[0]?.id;
     const date = new Date(Date.now())
     const dateNow = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+    let barcode = date.getTime().toString();
+
     let receipt = "";
     receipt += commands.CASH_DRAWER.CD_KICK_2;
     if (this.receiptPrintedStatus) {
@@ -1242,6 +1245,8 @@ export class SellPage implements OnInit {
 
       })
       receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
       receipt += commands.HORIZONTAL_LINE.HR_58MM;
       receipt += commands.EOL;
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
@@ -1346,13 +1351,24 @@ export class SellPage implements OnInit {
     }
 
     if(this.printBarcodeStatus) {
-      receipt += commands.BARCODE_PRINT.GS + commands.BARCODE_PRINT.H + '\x80' + commands.BARCODE_PRINT.K + '\x04' + '123456780' + commands.BARCODE_PRINT.END;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += commands.BARCODE_PRINT.GS + commands.BARCODE_PRINT.H + '\x80';
+      receipt += commands.BARCODE_PRINT.GS + commands.BARCODE_PRINT.K + '\x04' + barcode + commands.BARCODE_PRINT.END;
+      receipt += commands.EOL;
+      receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
+      receipt += barcode;
     }
 
-    // console.log(receipt);
+    receipt += commands.EOL;
+    receipt += commands.EOL;
+    console.log(receipt);
+
     this.print.sendToBluetoothPrinter(printMac, receipt);
 
-    if (this.printBarcodeStatus) {
+    if (this.storeCopyStatus) {
       this.print.sendToBluetoothPrinter(printMac, receipt);
     }
   }
@@ -1399,7 +1415,8 @@ export class SellPage implements OnInit {
       receipt += commands.EOL;
       receipt += this.last_sale.store_info.phone;
       // customer information print
-      if (!this.dontPrintCustomerStatus) {
+      // customer information print
+      if (this.cartService.cart.customer && !this.dontPrintCustomerStatus) {
         receipt += commands.EOL;
         receipt += commands.EOL;
         receipt += commands.TEXT_FORMAT.TXT_NORMAL;
@@ -1450,6 +1467,8 @@ export class SellPage implements OnInit {
 
       })
       receipt += commands.EOL;
+      receipt += commands.TEXT_FORMAT.TXT_NORMAL;
+      receipt += commands.TEXT_FORMAT.TXT_ALIGN_CT;
       receipt += commands.HORIZONTAL_LINE.HR_58MM;
       receipt += commands.EOL;
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
@@ -1553,11 +1572,7 @@ export class SellPage implements OnInit {
       receipt += commands.TEXT_FORMAT.TXT_ALIGN_LT;
     }
 
-    if(this.printBarcodeStatus) {
-      receipt += commands.BARCODE_PRINT.GS + commands.BARCODE_PRINT.H + '\x80' + commands.BARCODE_PRINT.K + '\x04' + '123456780' + commands.BARCODE_PRINT.END;
-    }
-
-    // console.log(receipt);
+    console.log(receipt);
     this.print.sendToBluetoothPrinter(printMac, receipt);
 
     if (this.storeCopyStatus) {
@@ -1774,7 +1789,7 @@ export class SellPage implements OnInit {
       } else {
         this.cartService.newCart();
       }
-      // this.open_register.initTable();
+      this.open_register.initTable();
     })
   }
 

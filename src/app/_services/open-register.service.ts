@@ -45,15 +45,15 @@ export class OpenRegisterService {
 		private print: PrintService,
 	) {
 		this.init();
-		this.addPrinterList();
 	}
-
+	
 	init() {
 		this.tableData = [];
 		this.loadOutlet();
-    this.loadSalesTax();
+    	this.loadSalesTax();
 		this.loadCategories();
 		this.loadStorePolicy();
+		this.addPrinterList();
 	}
 
 	addPrinterList(): void {
@@ -150,10 +150,6 @@ export class OpenRegisterService {
 	      filter.start = this.openClose.opening_time;
 	      filter.user_id = this.openClose.user._id;
 	    } else {
-	      filter.start = this.lastClose.opening_time;
-	      filter.end = this.lastClose.closing_time;
-	      filter.user_id = this.lastClose.user._id;
-
 	      return;
 	    }
 
@@ -223,44 +219,107 @@ export class OpenRegisterService {
 		let receipt = "";
 
 		receipt += Commands.EOL;
-		receipt += Commands.EOL;
-		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_CT;
-		receipt += "Sale Summary Report";
-
-		receipt += Commands.EOL;
 		receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
 		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_CT;
+		receipt += "Report Summary";
 		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_CT;
 		receipt += dateNow;
-
-		receipt += Commands.EOL;
+		receipt += Commands.EOL;		
+		receipt += Commands.EOL;		
+		receipt += "Payments Summary";
 		receipt += Commands.EOL;
 		receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
 		receipt += Commands.HORIZONTAL_LINE.HR_58MM;
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+		receipt += "Payment Type";
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+		receipt += "Expected";
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+		receipt += "Cash";
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+		receipt += this.util.getPriceWithCurrency(this.openClose.expectedCash);
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+		receipt += "Credit Card";
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+		receipt += this.util.getPriceWithCurrency(this.openClose.diffCreditCard);
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+		receipt += "Debit Card";
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+		receipt += this.util.getPriceWithCurrency(this.openClose.receivedDebitCard);
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+		receipt += "Store Credit";
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+		receipt += this.util.getPriceWithCurrency(this.openClose.receivedStoreCredit);
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+		receipt += "Refunds";
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+		receipt += this.util.getPriceWithCurrency(this.openClose.totalReturns);
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+		receipt += "Voided";
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+		receipt += this.util.getPriceWithCurrency(this.openClose.totalVoided);
+		receipt += Commands.EOL;
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+		receipt += "Total";
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+		receipt += this.util.getPriceWithCurrency(this.openClose.totalCounted);
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
+		receipt += Commands.HORIZONTAL_LINE.HR_58MM;
+		receipt += Commands.EOL;
 
+		receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+		receipt += "Sale Summary";
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
+		receipt += Commands.HORIZONTAL_LINE.HR_58MM;
+		receipt += Commands.EOL;
+		receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
+		receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+		receipt += "Category";
+		if(!this.paymentSummaryStatus) {
+			receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+			receipt += "Qty";
+			receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+			receipt += "Sum";
+		} else {
+			receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+			receipt += "Sum";
+		}
+		
 		this.tableData.forEach((p) => {
 		  receipt += Commands.EOL;
 		  receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
 		  receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
-		  receipt += "Category name: ";
+		//   receipt += "Category name: ";
 		  receipt += p.name;
-		  receipt += Commands.EOL;
-		  receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
-		  receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
-		  receipt += "Sale Quantity: ";
-		  receipt += p.sale_qty;
-		  if(!this.paymentSummaryStatus) {
-		    receipt += Commands.EOL;
-		    receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
-		    receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
-		    receipt += "Sale Sum: ";
-		    receipt += p.sale_sum;  
+		//   receipt += Commands.EOL;
+		  if (!this.paymentSummaryStatus) {
+			receipt += Commands.TEXT_FORMAT.TXT_ALIGN_LT;
+			// receipt += "Sale Quantity: ";
+			receipt += p.sale_qty;
+			receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+			receipt += p.sale_sum;
+		  } else {
+			receipt += Commands.TEXT_FORMAT.TXT_ALIGN_RT;
+			receipt += p.sale_sum;
 		  }
-		  receipt += Commands.EOL;      
 		});
 
 		receipt += Commands.TEXT_FORMAT.TXT_NORMAL;
 		receipt += Commands.HORIZONTAL_LINE.HR_58MM;
+		receipt += Commands.EOL;
+		receipt += Commands.EOL;
 
 		// console.log(receipt);
 		this.print.sendToBluetoothPrinter(printMac, receipt);

@@ -127,7 +127,6 @@ export class ProductTypePage implements OnInit {
       componentProps: {row: row}
     });
     popover.onDidDismiss().then(result => {
-      console.log(result);
       if(result && result.data && result.data.process) {
         this.initTable();
       }

@@ -17,6 +17,7 @@ import { Device } from "@ionic-native/device/ngx";
 import {BluetoothSerial} from '@ionic-native/bluetooth-serial/ngx';
 import { BackgroundMode } from '@ionic-native/background-mode/ngx';
 // import { BackgroundMode } from '@awesome-cordova-plugins/background-mode/ngx';
+import { OpenRegisterPage } from 'src/app/pages/main/sell/open-register/open-register.page';
 
 export function tokenGetter(): any {
   return localStorage.getItem('token');
@@ -43,6 +44,7 @@ export function tokenGetter(): any {
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }, 
     IonicGestureConfig,
     BluetoothSerial,
+    OpenRegisterPage,
     BackgroundMode
   ],
   bootstrap: [AppComponent],
